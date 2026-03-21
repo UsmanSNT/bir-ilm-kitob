@@ -1,0 +1,1381 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>KitobBozor — Telegram WebApp</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Lora:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0f0f13;
+  --surface: #17171f;
+  --surface2: #1e1e2a;
+  --surface3: #252535;
+  --border: rgba(255,255,255,0.07);
+  --accent: #6c63ff;
+  --accent2: #ff6584;
+  --accent3: #43e97b;
+  --gold: #ffd166;
+  --text: #f0f0f8;
+  --text2: #8888aa;
+  --text3: #555570;
+  --radius: 16px;
+  --radius-sm: 10px;
+  --shadow: 0 8px 32px rgba(0,0,0,0.4);
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body {
+  height: 100%;
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Outfit', sans-serif;
+  font-size: 14px;
+  -webkit-tap-highlight-color: transparent;
+  overscroll-behavior: none;
+}
+
+#app {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* ─── HEADER ─── */
+.header {
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  padding: 12px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-shrink: 0;
+  backdrop-filter: blur(20px);
+}
+.header-logo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 18px;
+  font-weight: 800;
+  letter-spacing: -0.5px;
+}
+.header-logo .icon {
+  width: 34px; height: 34px;
+  background: linear-gradient(135deg, var(--accent), var(--accent2));
+  border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 16px;
+}
+.header-logo span { color: var(--text); }
+.header-logo span b { color: var(--gold); }
+
+.header-right { display: flex; align-items: center; gap: 8px; }
+
+.cart-btn {
+  position: relative;
+  width: 38px; height: 38px;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 17px;
+  transition: all 0.2s;
+}
+.cart-btn:active { transform: scale(0.93); }
+.cart-badge {
+  position: absolute;
+  top: -4px; right: -4px;
+  background: var(--accent2);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  min-width: 18px; height: 18px;
+  border-radius: 9px;
+  display: flex; align-items: center; justify-content: center;
+  padding: 0 4px;
+  border: 2px solid var(--bg);
+  display: none;
+}
+.cart-badge.show { display: flex; }
+
+.user-avatar {
+  width: 34px; height: 34px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--accent), var(--accent2));
+  display: flex; align-items: center; justify-content: center;
+  font-weight: 700;
+  font-size: 13px;
+  flex-shrink: 0;
+  cursor: pointer;
+}
+
+/* ─── SEARCH BAR ─── */
+.search-wrap {
+  padding: 12px 16px 0;
+  flex-shrink: 0;
+}
+.search-box {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 0 14px;
+  transition: border-color 0.2s;
+}
+.search-box:focus-within { border-color: var(--accent); }
+.search-box span { color: var(--text3); font-size: 16px; }
+.search-box input {
+  flex: 1;
+  background: none;
+  border: none;
+  outline: none;
+  color: var(--text);
+  font-family: 'Outfit', sans-serif;
+  font-size: 14px;
+  padding: 11px 0;
+}
+.search-box input::placeholder { color: var(--text3); }
+
+/* ─── FILTERS ─── */
+.filters-wrap {
+  padding: 10px 16px;
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  flex-shrink: 0;
+  scrollbar-width: none;
+}
+.filters-wrap::-webkit-scrollbar { display: none; }
+.filter-chip {
+  flex-shrink: 0;
+  padding: 6px 14px;
+  border-radius: 20px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text2);
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+.filter-chip.active {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}
+.filter-chip:active { transform: scale(0.95); }
+
+/* ─── MAIN SCROLL ─── */
+.main-scroll {
+  flex: 1;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: none;
+}
+.main-scroll::-webkit-scrollbar { display: none; }
+
+/* ─── VIEWS ─── */
+.view { display: none; padding: 16px; }
+.view.active { display: block; }
+
+/* ─── BOOKS GRID ─── */
+.books-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+}
+
+.book-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s;
+  position: relative;
+}
+.book-card:active { transform: scale(0.97); }
+
+.book-card-img {
+  width: 100%;
+  aspect-ratio: 3/4;
+  object-fit: cover;
+  background: var(--surface2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 48px;
+  position: relative;
+  overflow: hidden;
+}
+.book-card-img .fake-cover {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-size: 44px;
+  background: var(--grad);
+}
+.book-badge {
+  position: absolute;
+  top: 8px; right: 8px;
+  background: var(--accent2);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 3px 7px;
+  border-radius: 6px;
+}
+.book-badge.new { background: var(--accent3); color: #000; }
+
+.book-card-body { padding: 10px; }
+.book-card-title {
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.3;
+  margin-bottom: 4px;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.book-card-author {
+  font-size: 11px;
+  color: var(--text2);
+  margin-bottom: 8px;
+}
+.book-card-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.book-price {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--gold);
+}
+.add-btn {
+  width: 28px; height: 28px;
+  background: var(--accent);
+  border: none;
+  border-radius: 8px;
+  color: #fff;
+  font-size: 16px;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: all 0.2s;
+  flex-shrink: 0;
+}
+.add-btn:active { transform: scale(0.88); }
+.add-btn.added { background: var(--accent3); color: #000; }
+
+/* ─── BOOK DETAIL MODAL ─── */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.7);
+  z-index: 100;
+  display: flex;
+  align-items: flex-end;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s;
+  backdrop-filter: blur(4px);
+}
+.modal-overlay.open {
+  opacity: 1;
+  pointer-events: all;
+}
+.modal-sheet {
+  background: var(--surface);
+  border-radius: 20px 20px 0 0;
+  width: 100%;
+  max-height: 88vh;
+  overflow-y: auto;
+  transform: translateY(100%);
+  transition: transform 0.35s cubic-bezier(0.34, 1.1, 0.64, 1);
+}
+.modal-overlay.open .modal-sheet { transform: translateY(0); }
+
+.modal-handle {
+  width: 36px; height: 4px;
+  background: var(--border);
+  border-radius: 2px;
+  margin: 12px auto 0;
+}
+.modal-body { padding: 20px; }
+
+.modal-cover {
+  width: 100%;
+  height: 200px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 80px;
+  margin-bottom: 20px;
+  background: var(--surface2);
+}
+
+.modal-title {
+  font-family: 'Lora', serif;
+  font-size: 22px;
+  font-weight: 600;
+  line-height: 1.3;
+  margin-bottom: 6px;
+}
+.modal-author { color: var(--text2); font-size: 13px; margin-bottom: 12px; }
+
+.modal-tags { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 16px; }
+.tag {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 11px;
+  color: var(--text2);
+}
+
+.modal-desc {
+  color: var(--text2);
+  line-height: 1.7;
+  font-size: 13px;
+  margin-bottom: 20px;
+}
+
+.modal-footer {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  padding: 16px 0 20px;
+  border-top: 1px solid var(--border);
+}
+.modal-price {
+  font-size: 24px;
+  font-weight: 800;
+  color: var(--gold);
+  flex: 1;
+}
+.modal-price small { font-size: 13px; color: var(--text3); font-weight: 400; display: block; }
+
+.btn-primary {
+  padding: 13px 24px;
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  border-radius: 12px;
+  font-family: 'Outfit', sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex; align-items: center; gap: 8px;
+}
+.btn-primary:active { transform: scale(0.97); opacity: 0.9; }
+.btn-primary.full { width: 100%; justify-content: center; }
+.btn-primary.success { background: var(--accent3); color: #000; }
+.btn-secondary {
+  padding: 13px 20px;
+  background: var(--surface2);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  font-family: 'Outfit', sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+/* ─── CART VIEW ─── */
+.cart-empty {
+  text-align: center;
+  padding: 60px 20px;
+  color: var(--text3);
+}
+.cart-empty .icon { font-size: 56px; margin-bottom: 16px; }
+.cart-empty h3 { font-size: 18px; color: var(--text2); margin-bottom: 8px; }
+
+.cart-item {
+  display: flex;
+  gap: 12px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 12px;
+  margin-bottom: 10px;
+  align-items: center;
+}
+.cart-item-cover {
+  width: 54px; height: 72px;
+  border-radius: 8px;
+  background: var(--surface2);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 28px;
+  flex-shrink: 0;
+}
+.cart-item-info { flex: 1; min-width: 0; }
+.cart-item-title {
+  font-size: 13px; font-weight: 600;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  margin-bottom: 4px;
+}
+.cart-item-author { font-size: 11px; color: var(--text2); margin-bottom: 8px; }
+.cart-item-controls { display: flex; align-items: center; gap: 8px; }
+.qty-btn {
+  width: 26px; height: 26px;
+  background: var(--surface3);
+  border: none; border-radius: 6px;
+  color: var(--text);
+  font-size: 14px;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+}
+.qty-num { font-size: 13px; font-weight: 600; min-width: 20px; text-align: center; }
+.cart-item-price { font-size: 14px; font-weight: 700; color: var(--gold); }
+.cart-item-del {
+  width: 30px; height: 30px;
+  background: none; border: none;
+  color: var(--text3);
+  font-size: 16px;
+  cursor: pointer;
+  border-radius: 6px;
+  display: flex; align-items: center; justify-content: center;
+  transition: color 0.2s;
+}
+.cart-item-del:hover { color: var(--accent2); }
+
+.cart-summary {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px;
+  margin-top: 4px;
+}
+.cart-summary-row {
+  display: flex; justify-content: space-between;
+  margin-bottom: 8px; font-size: 13px; color: var(--text2);
+}
+.cart-summary-row.total {
+  font-size: 16px; font-weight: 700;
+  color: var(--text);
+  padding-top: 10px;
+  border-top: 1px solid var(--border);
+  margin-top: 8px; margin-bottom: 16px;
+}
+.cart-summary-row .green { color: var(--accent3); }
+.cart-summary-row .gold { color: var(--gold); }
+
+/* ─── CHECKOUT ─── */
+.checkout-section { margin-bottom: 20px; }
+.checkout-section h3 {
+  font-size: 15px; font-weight: 700;
+  margin-bottom: 12px;
+  display: flex; align-items: center; gap: 8px;
+}
+.form-field { margin-bottom: 10px; }
+.form-field label {
+  display: block;
+  font-size: 11px;
+  color: var(--text3);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin-bottom: 6px;
+}
+.form-field input, .form-field textarea {
+  width: 100%;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 12px 14px;
+  color: var(--text);
+  font-family: 'Outfit', sans-serif;
+  font-size: 14px;
+  outline: none;
+  transition: border-color 0.2s;
+  resize: none;
+}
+.form-field input:focus, .form-field textarea:focus { border-color: var(--accent); }
+.form-field textarea { min-height: 80px; }
+
+/* ─── CASHBACK TOGGLE ─── */
+.cashback-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 14px;
+  margin-bottom: 14px;
+  cursor: pointer;
+}
+.cashback-toggle-left { display: flex; align-items: center; gap: 12px; }
+.cashback-toggle-left .icon { font-size: 24px; }
+.cashback-toggle-left h4 { font-size: 14px; font-weight: 600; }
+.cashback-toggle-left p { font-size: 11px; color: var(--text2); }
+.toggle-switch {
+  width: 42px; height: 24px;
+  background: var(--surface3);
+  border-radius: 12px;
+  position: relative;
+  transition: background 0.2s;
+  flex-shrink: 0;
+}
+.toggle-switch.on { background: var(--accent); }
+.toggle-knob {
+  width: 18px; height: 18px;
+  background: #fff;
+  border-radius: 50%;
+  position: absolute;
+  top: 3px; left: 3px;
+  transition: left 0.2s;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+}
+.toggle-switch.on .toggle-knob { left: 21px; }
+
+/* ─── DASHBOARD ─── */
+.dash-header {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px;
+  margin-bottom: 16px;
+}
+.dash-avatar {
+  width: 52px; height: 52px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--accent), var(--accent2));
+  display: flex; align-items: center; justify-content: center;
+  font-size: 20px; font-weight: 700;
+}
+.dash-name { font-size: 16px; font-weight: 700; margin-bottom: 2px; }
+.dash-handle { font-size: 12px; color: var(--text3); }
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+.stat-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px;
+  text-align: center;
+}
+.stat-card .icon { font-size: 24px; margin-bottom: 8px; }
+.stat-card .value {
+  font-size: 22px; font-weight: 800;
+  color: var(--text);
+  margin-bottom: 4px;
+}
+.stat-card .label { font-size: 11px; color: var(--text3); }
+
+/* Cashback card */
+.cashback-card {
+  background: linear-gradient(135deg, #1a1a3e, #2d1f4e);
+  border: 1px solid rgba(108,99,255,0.3);
+  border-radius: var(--radius);
+  padding: 20px;
+  margin-bottom: 16px;
+  position: relative;
+  overflow: hidden;
+}
+.cashback-card::before {
+  content: '';
+  position: absolute;
+  top: -30px; right: -30px;
+  width: 120px; height: 120px;
+  background: radial-gradient(circle, rgba(108,99,255,0.3), transparent 70%);
+  border-radius: 50%;
+}
+.cashback-card h3 { font-size: 13px; color: var(--text2); margin-bottom: 4px; }
+.cashback-amount {
+  font-size: 36px; font-weight: 800;
+  color: var(--gold);
+  margin-bottom: 4px;
+}
+.cashback-amount span { font-size: 16px; }
+.cashback-card p { font-size: 12px; color: var(--text3); margin-bottom: 14px; }
+.cashback-progress-wrap { background: rgba(255,255,255,0.1); border-radius: 4px; height: 6px; }
+.cashback-progress { background: linear-gradient(90deg, var(--accent), var(--gold)); border-radius: 4px; height: 6px; transition: width 0.5s; }
+.cashback-card .progress-label { display: flex; justify-content: space-between; font-size: 10px; color: var(--text3); margin-top: 6px; }
+
+/* Orders list */
+.orders-title { font-size: 15px; font-weight: 700; margin-bottom: 12px; }
+.order-item {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 14px;
+  margin-bottom: 10px;
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+.order-icon {
+  width: 40px; height: 40px;
+  border-radius: 10px;
+  background: var(--surface2);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 18px;
+  flex-shrink: 0;
+}
+.order-info { flex: 1; }
+.order-id { font-size: 12px; color: var(--text3); margin-bottom: 2px; }
+.order-items-text { font-size: 13px; font-weight: 600; margin-bottom: 4px; }
+.order-meta { display: flex; gap: 8px; align-items: center; }
+.order-status {
+  font-size: 10px; font-weight: 600;
+  padding: 2px 8px; border-radius: 20px;
+}
+.status-pending { background: rgba(255,209,102,0.15); color: var(--gold); }
+.status-delivered { background: rgba(67,233,123,0.15); color: var(--accent3); }
+.status-processing { background: rgba(108,99,255,0.15); color: var(--accent); }
+.order-price { font-size: 14px; font-weight: 700; color: var(--gold); }
+
+/* ─── BOTTOM NAV ─── */
+.bottom-nav {
+  background: var(--surface);
+  border-top: 1px solid var(--border);
+  display: flex;
+  flex-shrink: 0;
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+.nav-item {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 10px 0 8px;
+  cursor: pointer;
+  position: relative;
+  gap: 3px;
+  transition: opacity 0.2s;
+}
+.nav-item:active { opacity: 0.7; }
+.nav-icon { font-size: 20px; line-height: 1; position: relative; }
+.nav-label { font-size: 10px; color: var(--text3); font-weight: 500; }
+.nav-item.active .nav-label { color: var(--accent); }
+.nav-item.active .nav-icon { filter: none; }
+.nav-indicator {
+  position: absolute;
+  top: 6px;
+  width: 24px; height: 3px;
+  background: var(--accent);
+  border-radius: 0 0 3px 3px;
+  transition: opacity 0.2s;
+  opacity: 0;
+}
+.nav-item.active .nav-indicator { opacity: 1; }
+
+/* ─── TOAST ─── */
+.toast {
+  position: fixed;
+  bottom: 80px;
+  left: 50%; transform: translateX(-50%) translateY(20px);
+  background: var(--surface3);
+  border: 1px solid var(--border);
+  color: var(--text);
+  padding: 10px 18px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 500;
+  z-index: 999;
+  opacity: 0;
+  pointer-events: none;
+  transition: all 0.3s;
+  white-space: nowrap;
+  backdrop-filter: blur(10px);
+  display: flex; gap: 6px; align-items: center;
+}
+.toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+/* ─── SUCCESS SCREEN ─── */
+.success-screen {
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 40px 24px;
+  height: 100%;
+}
+.success-screen.show { display: flex; }
+.success-anim {
+  width: 90px; height: 90px;
+  background: linear-gradient(135deg, var(--accent3), #00c896);
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 42px;
+  margin-bottom: 24px;
+  animation: popIn 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+@keyframes popIn {
+  from { transform: scale(0); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+.success-screen h2 { font-size: 24px; font-weight: 800; margin-bottom: 8px; }
+.success-screen p { color: var(--text2); font-size: 14px; line-height: 1.6; margin-bottom: 28px; }
+
+/* ─── PAGE TITLE ─── */
+.page-title {
+  font-size: 20px; font-weight: 800;
+  margin-bottom: 16px;
+  display: flex; align-items: center; gap: 8px;
+}
+
+/* ─── SECTION HEADER ─── */
+.section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+.section-title { font-size: 14px; font-weight: 700; }
+.see-all { font-size: 12px; color: var(--accent); cursor: pointer; }
+
+/* Skeleton loader */
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+.skeleton {
+  background: linear-gradient(90deg, var(--surface) 25%, var(--surface2) 50%, var(--surface) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+  border-radius: 8px;
+}
+</style>
+</head>
+<body>
+<div id="app">
+  <!-- HEADER -->
+  <div class="header">
+    <div class="header-logo">
+      <div class="icon">📚</div>
+      <span>Kitob<b>Bozor</b></span>
+    </div>
+    <div class="header-right">
+      <div class="cart-btn" id="cartBtn" onclick="switchTab('cart')">
+        🛒
+        <div class="cart-badge" id="cartBadge">0</div>
+      </div>
+      <div class="user-avatar" id="userAvatar" onclick="switchTab('dashboard')">B</div>
+    </div>
+  </div>
+
+  <!-- MAIN SCROLL -->
+  <div class="main-scroll" id="mainScroll">
+
+    <!-- ═══ CATALOG VIEW ═══ -->
+    <div class="view active" id="view-catalog">
+      <div class="search-wrap" style="padding:16px 16px 0">
+        <div class="search-box">
+          <span>🔍</span>
+          <input type="text" placeholder="Kitob nomi yoki muallif..." id="searchInput" oninput="filterBooks()">
+        </div>
+      </div>
+      <div class="filters-wrap" id="filtersWrap"></div>
+      <div style="padding:0 16px 16px">
+        <div class="section-header">
+          <div class="section-title">📖 Barcha kitoblar</div>
+          <div id="bookCount" style="font-size:12px;color:var(--text3)"></div>
+        </div>
+        <div class="books-grid" id="booksGrid"></div>
+      </div>
+    </div>
+
+    <!-- ═══ CART VIEW ═══ -->
+    <div class="view" id="view-cart">
+      <div class="page-title">🛒 Savat</div>
+      <div id="cartContent"></div>
+    </div>
+
+    <!-- ═══ CHECKOUT VIEW ═══ -->
+    <div class="view" id="view-checkout">
+      <div class="page-title">📦 Buyurtma</div>
+      <div id="checkoutContent"></div>
+    </div>
+
+    <!-- ═══ DASHBOARD VIEW ═══ -->
+    <div class="view" id="view-dashboard">
+      <div id="dashboardContent"></div>
+    </div>
+
+  </div>
+
+  <!-- BOTTOM NAV -->
+  <div class="bottom-nav">
+    <div class="nav-item active" id="nav-catalog" onclick="switchTab('catalog')">
+      <div class="nav-indicator"></div>
+      <div class="nav-icon">🏠</div>
+      <div class="nav-label">Bosh sahifa</div>
+    </div>
+    <div class="nav-item" id="nav-cart" onclick="switchTab('cart')">
+      <div class="nav-indicator"></div>
+      <div class="nav-icon">🛒</div>
+      <div class="nav-label">Savat</div>
+    </div>
+    <div class="nav-item" id="nav-dashboard" onclick="switchTab('dashboard')">
+      <div class="nav-indicator"></div>
+      <div class="nav-icon">👤</div>
+      <div class="nav-label">Profil</div>
+    </div>
+  </div>
+</div>
+
+<!-- BOOK DETAIL MODAL -->
+<div class="modal-overlay" id="bookModal" onclick="closeModal(event)">
+  <div class="modal-sheet" id="modalSheet">
+    <div class="modal-handle"></div>
+    <div class="modal-body" id="modalBody"></div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ═══════════════════════════════════
+// DATA
+// ═══════════════════════════════════
+const BOOKS = [
+  { id:1, emoji:'📗', title:"O'tkan kunlar", author:"Abdulla Qodiriy", price:35000, genre:"Roman", desc:"O'zbek adabiyotining durdonasi. Otabek va Kumush muhabbati haqida tarixiy roman.", badge:"Bestseller", grad:"linear-gradient(135deg,#1a4a2e,#2d8a5a)" },
+  { id:2, emoji:'📘', title:"Mehrobdan chayon", author:"Abdulla Qodiriy", price:32000, genre:"Roman", desc:"Anvar va Ra'no muhabbati, mansab va xiyonat to'qnashuvi haqida dramatik roman.", grad:"linear-gradient(135deg,#1a2a4a,#2d5a8a)" },
+  { id:3, emoji:'📙', title:"Sariq devni minib", author:"Xudoiberdi To'xtaboyev", price:28000, genre:"Bolalar", desc:"Bolalar uchun sarguzasht hikoya. Quvnoq va ta'limli.", badge:"new", grad:"linear-gradient(135deg,#4a2a1a,#8a5a2d)" },
+  { id:4, emoji:'📕', title:"Atomic Habits", author:"James Clear", price:65000, genre:"Motivatsiya", desc:"Kichik o'zgarishlar qanday qilib katta natijalar berishi haqida amaliy qo'llanma.", badge:"Yangi", grad:"linear-gradient(135deg,#4a1a1a,#8a2d2d)" },
+  { id:5, emoji:'📔', title:"Qorajon", author:"Nazar Eshonqul", price:24000, genre:"Hikoya", desc:"Zamonaviy o'zbek nasri namunasi. Oddiy insonlar hayotidan olgan qissalar.", grad:"linear-gradient(135deg,#2a1a4a,#5a2d8a)" },
+  { id:6, emoji:'📒', title:"Rich Dad Poor Dad", author:"Robert Kiyosaki", price:72000, genre:"Moliya", desc:"Pul haqidagi fikrlashni o'zgartiruvchi eng mashhur moliyaviy kitob.", badge:"Bestseller", grad:"linear-gradient(135deg,#1a3a1a,#2d6a2d)" },
+  { id:7, emoji:'📓', title:"1984", author:"George Orwell", price:45000, genre:"Roman", desc:"Totalitar jamiyat haqida eng mashhur distopik roman.", grad:"linear-gradient(135deg,#1a1a1a,#3a3a3a)" },
+  { id:8, emoji:'📃', title:"Hobbi", author:"J.R.R. Tolkien", price:55000, genre:"Fantasy", desc:"Bilbo Begginzning ajoyib safari — dunglar, iblislar va ajdar Smaug bilan.", badge:"new", grad:"linear-gradient(135deg,#1a3a2a,#2d6a4a)" },
+  { id:9, emoji:'📜', title:"Iqtisodiyot asoslari", author:"N.G. Mansur", price:38000, genre:"Iqtisod", desc:"Iqtisodiyot bo'yicha zamonaviy darslik. Talabalar uchun ideal.", grad:"linear-gradient(135deg,#2a2a1a,#6a6a2d)" },
+  { id:10, emoji:'📋', title:"Kimyo sirlari", author:"U. Nazarov", price:42000, genre:"Fan", desc:"Kimyo fanining asosiy qonunlari va reaksiyalari haqida qiziqarli mazmun.", badge:"new", grad:"linear-gradient(135deg,#1a2a3a,#2d4a6a)" },
+];
+
+const GENRES = ['Barchasi', 'Roman', 'Motivatsiya', 'Moliya', 'Bolalar', 'Fantasy', 'Hikoya', 'Iqtisod', 'Fan'];
+
+let cart = {}; // { bookId: qty }
+let selectedGenre = 'Barchasi';
+let searchQ = '';
+let useCashback = false;
+let cashbackBalance = 12500;
+const CASHBACK_RATE = 0.05;
+
+// Telegram user mock (real tg would give window.Telegram.WebApp.initDataUnsafe.user)
+let tgUser = { first_name: 'Barno', username: 'barno_orolova', id: 123456 };
+try {
+  if (window.Telegram && window.Telegram.WebApp) {
+    window.Telegram.WebApp.ready();
+    window.Telegram.WebApp.expand();
+    const u = window.Telegram.WebApp.initDataUnsafe?.user;
+    if (u) tgUser = u;
+  }
+} catch(e){}
+
+// Orders history mock
+const orders = [
+  { id:'#ORD-2341', items:"O'tkan kunlar, 1984", total:80000, status:'delivered', date:'15 Mar 2025' },
+  { id:'#ORD-2298', items:"Rich Dad Poor Dad", total:72000, status:'delivered', date:'02 Feb 2025' },
+  { id:'#ORD-2187', items:"Atomic Habits, Hobbi", total:120000, status:'pending', date:'18 Mar 2025' },
+];
+
+// ═══════════════════════════════════
+// INIT
+// ═══════════════════════════════════
+window.onload = () => {
+  renderFilters();
+  renderBooks();
+  renderDashboard();
+  updateAvatar();
+};
+
+function updateAvatar() {
+  const name = tgUser.first_name || 'U';
+  document.getElementById('userAvatar').textContent = name[0].toUpperCase();
+}
+
+// ═══════════════════════════════════
+// NAVIGATION
+// ═══════════════════════════════════
+function switchTab(tab) {
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+
+  document.getElementById('view-' + tab)?.classList.add('active');
+  document.getElementById('nav-' + tab)?.classList.add('active');
+
+  const scroll = document.getElementById('mainScroll');
+  scroll.scrollTop = 0;
+
+  if (tab === 'cart') renderCart();
+  if (tab === 'checkout') renderCheckout();
+  if (tab === 'dashboard') renderDashboard();
+}
+
+// ═══════════════════════════════════
+// FILTERS & SEARCH
+// ═══════════════════════════════════
+function renderFilters() {
+  const wrap = document.getElementById('filtersWrap');
+  wrap.innerHTML = GENRES.map(g => `
+    <div class="filter-chip ${g === selectedGenre ? 'active' : ''}" onclick="selectGenre('${g}')">${g}</div>
+  `).join('');
+}
+
+function selectGenre(g) {
+  selectedGenre = g;
+  renderFilters();
+  renderBooks();
+}
+
+function filterBooks() {
+  searchQ = document.getElementById('searchInput').value.toLowerCase();
+  renderBooks();
+}
+
+function getFilteredBooks() {
+  return BOOKS.filter(b => {
+    const matchGenre = selectedGenre === 'Barchasi' || b.genre === selectedGenre;
+    const matchSearch = !searchQ || b.title.toLowerCase().includes(searchQ) || b.author.toLowerCase().includes(searchQ);
+    return matchGenre && matchSearch;
+  });
+}
+
+// ═══════════════════════════════════
+// CATALOG
+// ═══════════════════════════════════
+function renderBooks() {
+  const books = getFilteredBooks();
+  const grid = document.getElementById('booksGrid');
+  const count = document.getElementById('bookCount');
+  count.textContent = books.length + ' ta kitob';
+
+  grid.innerHTML = books.map(b => {
+    const inCart = cart[b.id] > 0;
+    return `
+    <div class="book-card" onclick="openBook(${b.id})">
+      <div class="book-card-img">
+        <div class="fake-cover" style="background:${b.grad}">${b.emoji}</div>
+        ${b.badge ? `<div class="book-badge ${b.badge==='new'?'new':''}">${b.badge==='new'?'Yangi':b.badge}</div>` : ''}
+      </div>
+      <div class="book-card-body">
+        <div class="book-card-title">${b.title}</div>
+        <div class="book-card-author">${b.author}</div>
+        <div class="book-card-footer">
+          <div class="book-price">${fmt(b.price)}</div>
+          <button class="add-btn ${inCart?'added':''}" onclick="quickAdd(event,${b.id})">
+            ${inCart ? '✓' : '+'}
+          </button>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function quickAdd(e, id) {
+  e.stopPropagation();
+  addToCart(id);
+}
+
+// ═══════════════════════════════════
+// BOOK MODAL
+// ═══════════════════════════════════
+function openBook(id) {
+  const b = BOOKS.find(x => x.id === id);
+  if (!b) return;
+
+  const inCart = cart[b.id] > 0;
+  document.getElementById('modalBody').innerHTML = `
+    <div class="modal-cover" style="background:${b.grad}">${b.emoji}</div>
+    <div class="modal-title">${b.title}</div>
+    <div class="modal-author">✍️ ${b.author}</div>
+    <div class="modal-tags">
+      <div class="tag">📚 ${b.genre}</div>
+      ${b.badge ? `<div class="tag">🔥 ${b.badge==='new'?'Yangi':b.badge}</div>` : ''}
+    </div>
+    <div class="modal-desc">${b.desc}</div>
+    <div class="modal-footer">
+      <div class="modal-price">
+        ${fmt(b.price)}
+        <small>Narx (so'm)</small>
+      </div>
+      <button class="btn-primary ${inCart?'success':''}" id="modalCartBtn" onclick="modalAddToCart(${id})">
+        ${inCart ? '✓ Savatda' : '🛒 Savatga'}
+      </button>
+    </div>
+  `;
+  document.getElementById('bookModal').classList.add('open');
+}
+
+function modalAddToCart(id) {
+  addToCart(id);
+  const btn = document.getElementById('modalCartBtn');
+  if (btn) { btn.className = 'btn-primary success'; btn.textContent = '✓ Savatda'; }
+  renderBooks();
+}
+
+function closeModal(e) {
+  if (e.target === document.getElementById('bookModal')) {
+    document.getElementById('bookModal').classList.remove('open');
+  }
+}
+
+// ═══════════════════════════════════
+// CART LOGIC
+// ═══════════════════════════════════
+function addToCart(id) {
+  if (!cart[id]) cart[id] = 0;
+  if (cart[id] === 0) {
+    cart[id] = 1;
+    showToast('✅ Savatga qo\'shildi');
+  } else {
+    cart[id]++;
+    showToast(`🛒 ${getBook(id).title} — ${cart[id]} ta`);
+  }
+  updateCartBadge();
+}
+
+function removeFromCart(id) {
+  delete cart[id];
+  updateCartBadge();
+  renderCart();
+  renderBooks();
+}
+
+function changeQty(id, delta) {
+  if (!cart[id]) return;
+  cart[id] += delta;
+  if (cart[id] <= 0) { delete cart[id]; }
+  updateCartBadge();
+  renderCart();
+  renderBooks();
+}
+
+function getBook(id) { return BOOKS.find(x => x.id === id); }
+
+function getCartCount() { return Object.values(cart).reduce((a,b)=>a+b,0); }
+
+function getCartTotal() {
+  return Object.entries(cart).reduce((sum,[id,qty])=>{
+    const b = getBook(Number(id));
+    return b ? sum + b.price * qty : sum;
+  }, 0);
+}
+
+function updateCartBadge() {
+  const n = getCartCount();
+  const badge = document.getElementById('cartBadge');
+  badge.textContent = n;
+  badge.classList.toggle('show', n > 0);
+}
+
+// ═══════════════════════════════════
+// RENDER CART
+// ═══════════════════════════════════
+function renderCart() {
+  const container = document.getElementById('cartContent');
+  const entries = Object.entries(cart).filter(([,q])=>q>0);
+
+  if (!entries.length) {
+    container.innerHTML = `
+      <div class="cart-empty">
+        <div class="icon">🛒</div>
+        <h3>Savat bo'sh</h3>
+        <p>Kitoblar qo'shing va buyurtma bering</p>
+        <button class="btn-primary" style="margin:16px auto 0;display:flex" onclick="switchTab('catalog')">
+          📚 Katalogga o'tish
+        </button>
+      </div>`;
+    return;
+  }
+
+  const subtotal = getCartTotal();
+  const cashbackEarn = Math.round(subtotal * CASHBACK_RATE);
+  const discount = useCashback ? Math.min(cashbackBalance, subtotal) : 0;
+  const total = subtotal - discount;
+
+  container.innerHTML = `
+    ${entries.map(([id,qty])=>{
+      const b = getBook(Number(id));
+      return b ? `
+      <div class="cart-item">
+        <div class="cart-item-cover" style="background:${b.grad}">${b.emoji}</div>
+        <div class="cart-item-info">
+          <div class="cart-item-title">${b.title}</div>
+          <div class="cart-item-author">${b.author}</div>
+          <div class="cart-item-controls">
+            <button class="qty-btn" onclick="changeQty(${b.id},-1)">−</button>
+            <span class="qty-num">${qty}</span>
+            <button class="qty-btn" onclick="changeQty(${b.id},1)">+</button>
+          </div>
+        </div>
+        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:8px">
+          <button class="cart-item-del" onclick="removeFromCart(${b.id})">✕</button>
+          <div class="cart-item-price">${fmt(b.price * qty)}</div>
+        </div>
+      </div>` : '';
+    }).join('')}
+
+    <div class="cart-summary">
+      <div class="cart-summary-row">
+        <span>Jami (${getCartCount()} ta kitob)</span>
+        <span>${fmt(subtotal)}</span>
+      </div>
+      ${discount > 0 ? `
+      <div class="cart-summary-row">
+        <span>Cashback chegirma</span>
+        <span class="green">−${fmt(discount)}</span>
+      </div>` : ''}
+      <div class="cart-summary-row">
+        <span>Yetkazib berish</span>
+        <span class="green">Bepul</span>
+      </div>
+      <div class="cart-summary-row total">
+        <span>To'lash kerak</span>
+        <span class="gold">${fmt(total)}</span>
+      </div>
+      <div style="background:rgba(67,233,123,0.1);border:1px solid rgba(67,233,123,0.2);border-radius:10px;padding:10px 12px;margin-bottom:14px;font-size:12px;color:var(--accent3);">
+        💰 Bu buyurtmadan <b>${fmt(cashbackEarn)}</b> cashback yig'asiz
+      </div>
+      <button class="btn-primary full" onclick="switchTab('checkout')">
+        📦 Buyurtma berish →
+      </button>
+    </div>
+  `;
+}
+
+// ═══════════════════════════════════
+// RENDER CHECKOUT
+// ═══════════════════════════════════
+function renderCheckout() {
+  const container = document.getElementById('checkoutContent');
+  const entries = Object.entries(cart).filter(([,q])=>q>0);
+
+  if (!entries.length) {
+    container.innerHTML = `<div class="cart-empty"><div class="icon">📦</div><h3>Savat bo'sh</h3></div>`;
+    return;
+  }
+
+  const subtotal = getCartTotal();
+  const discount = useCashback ? Math.min(cashbackBalance, subtotal) : 0;
+  const total = subtotal - discount;
+
+  container.innerHTML = `
+    <div class="checkout-section">
+      <h3>👤 Shaxsiy ma'lumotlar</h3>
+      <div class="form-field">
+        <label>Ism familiya</label>
+        <input type="text" id="f_name" placeholder="${tgUser.first_name} ..." value="${tgUser.first_name}">
+      </div>
+      <div class="form-field">
+        <label>Telefon raqam</label>
+        <input type="tel" id="f_phone" placeholder="+998 90 000 00 00">
+      </div>
+    </div>
+
+    <div class="checkout-section">
+      <h3>📍 Yetkazib berish</h3>
+      <div class="form-field">
+        <label>Manzil</label>
+        <textarea id="f_address" placeholder="Shahar, ko'cha, uy raqami..."></textarea>
+      </div>
+    </div>
+
+    ${cashbackBalance > 0 ? `
+    <div class="checkout-section">
+      <h3>💰 Cashback</h3>
+      <div class="cashback-toggle" onclick="toggleCashback()">
+        <div class="cashback-toggle-left">
+          <div class="icon">🎁</div>
+          <div>
+            <h4>Cashback ishlatish</h4>
+            <p>Balans: ${fmt(cashbackBalance)} so'm mavjud</p>
+          </div>
+        </div>
+        <div class="toggle-switch ${useCashback?'on':''}" id="cashbackToggle">
+          <div class="toggle-knob"></div>
+        </div>
+      </div>
+    </div>` : ''}
+
+    <div class="checkout-section">
+      <h3>📋 Buyurtma xulosasi</h3>
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:16px;">
+        ${entries.map(([id,qty])=>{
+          const b = getBook(Number(id));
+          return b ? `
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid var(--border);">
+            <span style="font-size:13px;">${b.emoji} ${b.title} × ${qty}</span>
+            <span style="font-size:13px;font-weight:600;color:var(--gold)">${fmt(b.price*qty)}</span>
+          </div>` : '';
+        }).join('')}
+        ${discount > 0 ? `
+        <div style="display:flex;justify-content:space-between;padding:8px 0;color:var(--accent3);font-size:13px;">
+          <span>Cashback chegirma</span><span>−${fmt(discount)}</span>
+        </div>` : ''}
+        <div style="display:flex;justify-content:space-between;padding:10px 0 4px;font-size:16px;font-weight:800;">
+          <span>Jami</span>
+          <span style="color:var(--gold)">${fmt(total)} so'm</span>
+        </div>
+      </div>
+    </div>
+
+    <button class="btn-primary full" onclick="placeOrder()" style="font-size:15px;padding:16px;">
+      ✅ Buyurtmani tasdiqlash
+    </button>
+    <div style="text-align:center;margin-top:10px;font-size:11px;color:var(--text3)">
+      🔒 Ma'lumotlaringiz xavfsiz saqlanadi
+    </div>
+    <div style="height:20px"></div>
+  `;
+}
+
+function toggleCashback() {
+  useCashback = !useCashback;
+  renderCheckout();
+}
+
+function placeOrder() {
+  const name = document.getElementById('f_name')?.value;
+  const phone = document.getElementById('f_phone')?.value;
+  const address = document.getElementById('f_address')?.value;
+
+  if (!name || !phone || !address) {
+    showToast('⚠️ Barcha maydonlarni to\'ldiring');
+    return;
+  }
+
+  // Simulate placing order
+  const subtotal = getCartTotal();
+  const cashbackEarned = Math.round(subtotal * CASHBACK_RATE);
+
+  if (useCashback) {
+    cashbackBalance = Math.max(0, cashbackBalance - Math.min(cashbackBalance, subtotal));
+  }
+  cashbackBalance += cashbackEarned;
+
+  // Clear cart
+  cart = {};
+  updateCartBadge();
+
+  // Show success
+  document.getElementById('checkoutContent').innerHTML = `
+    <div class="success-screen show">
+      <div class="success-anim">✅</div>
+      <h2>Buyurtma qabul qilindi!</h2>
+      <p>Sizning buyurtmangiz adminga yuborildi.<br>
+      Tez orada <b>Telegram</b>da xabar olasiz.<br><br>
+      💰 +${fmt(cashbackEarned)} cashback hisoblandi!</p>
+      <button class="btn-primary" onclick="switchTab('catalog')">
+        📚 Xarid davom ettirish
+      </button>
+    </div>
+  `;
+
+  // Telegram WebApp haptic
+  try { window.Telegram?.WebApp?.HapticFeedback?.notificationOccurred('success'); } catch(e){}
+
+  renderDashboard();
+}
+
+// ═══════════════════════════════════
+// RENDER DASHBOARD
+// ═══════════════════════════════════
+function renderDashboard() {
+  const container = document.getElementById('dashboardContent');
+  const totalSpent = orders.reduce((s,o)=>s+o.total,0);
+  const progressPct = Math.min((cashbackBalance / 50000) * 100, 100);
+
+  container.innerHTML = `
+    <div style="padding:16px">
+      <div class="dash-header">
+        <div class="dash-avatar">${(tgUser.first_name||'U')[0].toUpperCase()}</div>
+        <div>
+          <div class="dash-name">${tgUser.first_name || 'Foydalanuvchi'}</div>
+          <div class="dash-handle">@${tgUser.username || 'user_' + tgUser.id}</div>
+        </div>
+      </div>
+
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="icon">📦</div>
+          <div class="value">${orders.length}</div>
+          <div class="label">Jami buyurtmalar</div>
+        </div>
+        <div class="stat-card">
+          <div class="icon">💸</div>
+          <div class="value" style="font-size:16px">${fmt(totalSpent)}</div>
+          <div class="label">Jami sarflangan</div>
+        </div>
+      </div>
+
+      <div class="cashback-card">
+        <h3>💰 Cashback balansi</h3>
+        <div class="cashback-amount"><span>so'm</span> ${fmt(cashbackBalance)}</div>
+        <p>Har xariddan 5% cashback yig'asiz!</p>
+        <div class="cashback-progress-wrap">
+          <div class="cashback-progress" style="width:${progressPct}%"></div>
+        </div>
+        <div class="progress-label">
+          <span>${fmt(cashbackBalance)}</span>
+          <span>Maqsad: 50,000</span>
+        </div>
+      </div>
+
+      <div class="orders-title">📋 So'nggi buyurtmalar</div>
+      ${orders.map(o=>`
+        <div class="order-item">
+          <div class="order-icon">📦</div>
+          <div class="order-info">
+            <div class="order-id">${o.id} · ${o.date}</div>
+            <div class="order-items-text">${o.items}</div>
+            <div class="order-meta">
+              <div class="order-status status-${o.status}">
+                ${o.status==='delivered'?'✅ Yetkazildi':o.status==='pending'?'⏳ Kutilmoqda':'🔄 Jarayonda'}
+              </div>
+            </div>
+          </div>
+          <div class="order-price">${fmt(o.total)}</div>
+        </div>
+      `).join('')}
+      <div style="height:20px"></div>
+    </div>
+  `;
+}
+
+// ═══════════════════════════════════
+// UTILS
+// ═══════════════════════════════════
+function fmt(n) {
+  return new Intl.NumberFormat('uz-UZ').format(n);
+}
+
+let toastTimer;
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(()=>t.classList.remove('show'), 2200);
+}
+</script>
+</body>
+</html>
