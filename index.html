@@ -3,9 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<!-- Bo'sh = avtomatik: localhostda :3001, Vercelda shu sayt domeni (api-base ni backend URL qilib ham yozishingiz mumkin) -->
-<meta name="api-base" content="">
-<title>KitobBozor — Telegram WebApp</title>
+<title>Bir Ilm Kitob</title>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Lora:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
 <style>
@@ -23,804 +21,204 @@
   --text2: #8888aa;
   --text3: #555570;
   --radius: 16px;
-  --radius-sm: 10px;
-  --shadow: 0 8px 32px rgba(0,0,0,0.4);
 }
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Outfit',sans-serif;font-size:14px;-webkit-tap-highlight-color:transparent;overscroll-behavior:none}
+#app{height:100vh;display:flex;flex-direction:column;overflow:hidden}
 
-*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+/* HEADER */
+.header{background:var(--surface);border-bottom:1px solid var(--border);padding:12px 16px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-shrink:0}
+.header-logo{display:flex;align-items:center;gap:8px;font-size:18px;font-weight:800;letter-spacing:-0.5px}
+.header-logo .icon{width:34px;height:34px;background:linear-gradient(135deg,var(--accent),var(--accent2));border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:16px}
+.header-right{display:flex;align-items:center;gap:8px}
+.cart-btn{position:relative;width:38px;height:38px;background:var(--surface2);border:1px solid var(--border);border-radius:10px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:17px;transition:all .2s}
+.cart-btn:active{transform:scale(.93)}
+.cart-badge{position:absolute;top:-4px;right:-4px;background:var(--accent2);color:#fff;font-size:10px;font-weight:700;min-width:18px;height:18px;border-radius:9px;display:none;align-items:center;justify-content:center;padding:0 4px;border:2px solid var(--bg)}
+.cart-badge.show{display:flex}
+.user-avatar{width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--accent2));display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;flex-shrink:0;cursor:pointer}
 
-html, body {
-  height: 100%;
-  background: var(--bg);
-  color: var(--text);
-  font-family: 'Outfit', sans-serif;
-  font-size: 14px;
-  -webkit-tap-highlight-color: transparent;
-  overscroll-behavior: none;
-}
+/* SEARCH */
+.search-wrap{padding:12px 16px 0;flex-shrink:0}
+.search-box{display:flex;align-items:center;gap:10px;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:0 14px;transition:border-color .2s}
+.search-box:focus-within{border-color:var(--accent)}
+.search-box span{color:var(--text3);font-size:16px}
+.search-box input{flex:1;background:none;border:none;outline:none;color:var(--text);font-family:'Outfit',sans-serif;font-size:14px;padding:11px 0}
+.search-box input::placeholder{color:var(--text3)}
 
-#app {
-  height: 100vh;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-}
+/* FILTERS */
+.filters-wrap{padding:10px 16px;display:flex;gap:8px;overflow-x:auto;flex-shrink:0;scrollbar-width:none}
+.filters-wrap::-webkit-scrollbar{display:none}
+.filter-chip{flex-shrink:0;padding:6px 14px;border-radius:20px;border:1px solid var(--border);background:var(--surface);color:var(--text2);font-size:12px;font-weight:500;cursor:pointer;transition:all .2s;white-space:nowrap}
+.filter-chip.active{background:var(--accent);border-color:var(--accent);color:#fff}
+.filter-chip:active{transform:scale(.95)}
 
-/* ─── HEADER ─── */
-.header {
-  background: var(--surface);
-  border-bottom: 1px solid var(--border);
-  padding: 12px 16px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  flex-shrink: 0;
-  backdrop-filter: blur(20px);
-}
-.header-logo {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 18px;
-  font-weight: 800;
-  letter-spacing: -0.5px;
-}
-.header-logo .icon {
-  width: 34px; height: 34px;
-  background: linear-gradient(135deg, var(--accent), var(--accent2));
-  border-radius: 10px;
-  display: flex; align-items: center; justify-content: center;
-  font-size: 16px;
-}
-.header-logo span { color: var(--text); }
-.header-logo span b { color: var(--gold); }
+/* MAIN */
+.main-scroll{flex:1;overflow-y:auto;overscroll-behavior:contain;scrollbar-width:none}
+.main-scroll::-webkit-scrollbar{display:none}
+.view{display:none;padding:16px}
+.view.active{display:block}
 
-.header-right { display: flex; align-items: center; gap: 8px; }
+/* BOOKS GRID */
+.books-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
+.book-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;cursor:pointer;transition:transform .2s;position:relative}
+.book-card:active{transform:scale(.97)}
+.book-card-img{width:100%;aspect-ratio:3/4;display:flex;align-items:center;justify-content:center;font-size:48px;position:relative;overflow:hidden}
+.fake-cover{width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:44px}
+.book-badge{position:absolute;top:8px;right:8px;background:var(--accent2);color:#fff;font-size:10px;font-weight:700;padding:3px 7px;border-radius:6px}
+.book-badge.new{background:var(--accent3);color:#000}
+.book-card-body{padding:10px}
+.book-card-title{font-size:13px;font-weight:600;line-height:1.3;margin-bottom:4px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.book-card-author{font-size:11px;color:var(--text2);margin-bottom:8px}
+.book-card-footer{display:flex;align-items:center;justify-content:space-between}
+.book-price{font-size:14px;font-weight:700;color:var(--gold)}
+.add-btn{width:28px;height:28px;background:var(--accent);border:none;border-radius:8px;color:#fff;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .2s;flex-shrink:0}
+.add-btn:active{transform:scale(.88)}
+.add-btn.added{background:var(--accent3);color:#000}
 
-.cart-btn {
-  position: relative;
-  width: 38px; height: 38px;
-  background: var(--surface2);
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  cursor: pointer;
-  display: flex; align-items: center; justify-content: center;
-  font-size: 17px;
-  transition: all 0.2s;
-}
-.cart-btn:active { transform: scale(0.93); }
-.cart-badge {
-  position: absolute;
-  top: -4px; right: -4px;
-  background: var(--accent2);
-  color: #fff;
-  font-size: 10px;
-  font-weight: 700;
-  min-width: 18px; height: 18px;
-  border-radius: 9px;
-  display: flex; align-items: center; justify-content: center;
-  padding: 0 4px;
-  border: 2px solid var(--bg);
-  display: none;
-}
-.cart-badge.show { display: flex; }
+/* MODAL */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:100;display:flex;align-items:flex-end;opacity:0;pointer-events:none;transition:opacity .3s;backdrop-filter:blur(4px)}
+.modal-overlay.open{opacity:1;pointer-events:all}
+.modal-sheet{background:var(--surface);border-radius:20px 20px 0 0;width:100%;max-height:88vh;overflow-y:auto;transform:translateY(100%);transition:transform .35s cubic-bezier(.34,1.1,.64,1)}
+.modal-overlay.open .modal-sheet{transform:translateY(0)}
+.modal-handle{width:36px;height:4px;background:var(--border);border-radius:2px;margin:12px auto 0}
+.modal-body{padding:20px}
+.modal-cover{width:100%;height:200px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:80px;margin-bottom:20px}
+.modal-title{font-family:'Lora',serif;font-size:22px;font-weight:600;line-height:1.3;margin-bottom:6px}
+.modal-author{color:var(--text2);font-size:13px;margin-bottom:12px}
+.modal-tags{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px}
+.tag{background:var(--surface2);border:1px solid var(--border);padding:4px 10px;border-radius:20px;font-size:11px;color:var(--text2)}
+.modal-desc{color:var(--text2);line-height:1.7;font-size:13px;margin-bottom:20px}
+.modal-footer{display:flex;gap:12px;align-items:center;padding:16px 0 20px;border-top:1px solid var(--border)}
+.modal-price{font-size:24px;font-weight:800;color:var(--gold);flex:1}
+.modal-price small{font-size:13px;color:var(--text3);font-weight:400;display:block}
 
-.user-avatar {
-  width: 34px; height: 34px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, var(--accent), var(--accent2));
-  display: flex; align-items: center; justify-content: center;
-  font-weight: 700;
-  font-size: 13px;
-  flex-shrink: 0;
-  cursor: pointer;
-}
+/* BUTTONS */
+.btn-primary{padding:13px 24px;background:var(--accent);color:#fff;border:none;border-radius:12px;font-family:'Outfit',sans-serif;font-size:14px;font-weight:600;cursor:pointer;transition:all .2s;display:flex;align-items:center;gap:8px}
+.btn-primary:active{transform:scale(.97);opacity:.9}
+.btn-primary.full{width:100%;justify-content:center}
+.btn-primary.success{background:var(--accent3);color:#000}
+.btn-primary:disabled{opacity:.5;cursor:not-allowed}
 
-/* ─── SEARCH BAR ─── */
-.search-wrap {
-  padding: 12px 16px 0;
-  flex-shrink: 0;
-}
-.search-box {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  padding: 0 14px;
-  transition: border-color 0.2s;
-}
-.search-box:focus-within { border-color: var(--accent); }
-.search-box span { color: var(--text3); font-size: 16px; }
-.search-box input {
-  flex: 1;
-  background: none;
-  border: none;
-  outline: none;
-  color: var(--text);
-  font-family: 'Outfit', sans-serif;
-  font-size: 14px;
-  padding: 11px 0;
-}
-.search-box input::placeholder { color: var(--text3); }
+/* CART */
+.cart-empty{text-align:center;padding:60px 20px;color:var(--text3)}
+.cart-empty .icon{font-size:56px;margin-bottom:16px}
+.cart-empty h3{font-size:18px;color:var(--text2);margin-bottom:8px}
+.cart-item{display:flex;gap:12px;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:12px;margin-bottom:10px;align-items:center}
+.cart-item-cover{width:54px;height:72px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:28px;flex-shrink:0}
+.cart-item-info{flex:1;min-width:0}
+.cart-item-title{font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:4px}
+.cart-item-author{font-size:11px;color:var(--text2);margin-bottom:8px}
+.cart-item-controls{display:flex;align-items:center;gap:8px}
+.qty-btn{width:26px;height:26px;background:var(--surface3);border:none;border-radius:6px;color:var(--text);font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.qty-num{font-size:13px;font-weight:600;min-width:20px;text-align:center}
+.cart-item-price{font-size:14px;font-weight:700;color:var(--gold)}
+.cart-item-del{width:30px;height:30px;background:none;border:none;color:var(--text3);font-size:16px;cursor:pointer;border-radius:6px;display:flex;align-items:center;justify-content:center}
+.cart-summary{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px;margin-top:4px}
+.cart-summary-row{display:flex;justify-content:space-between;margin-bottom:8px;font-size:13px;color:var(--text2)}
+.cart-summary-row.total{font-size:16px;font-weight:700;color:var(--text);padding-top:10px;border-top:1px solid var(--border);margin-top:8px;margin-bottom:16px}
+.green{color:var(--accent3)}
+.gold{color:var(--gold)}
 
-/* ─── FILTERS ─── */
-.filters-wrap {
-  padding: 10px 16px;
-  display: flex;
-  gap: 8px;
-  overflow-x: auto;
-  flex-shrink: 0;
-  scrollbar-width: none;
-}
-.filters-wrap::-webkit-scrollbar { display: none; }
-.filter-chip {
-  flex-shrink: 0;
-  padding: 6px 14px;
-  border-radius: 20px;
-  border: 1px solid var(--border);
-  background: var(--surface);
-  color: var(--text2);
-  font-size: 12px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s;
-  white-space: nowrap;
-}
-.filter-chip.active {
-  background: var(--accent);
-  border-color: var(--accent);
-  color: #fff;
-}
-.filter-chip:active { transform: scale(0.95); }
+/* CHECKOUT */
+.checkout-section{margin-bottom:20px}
+.checkout-section h3{font-size:15px;font-weight:700;margin-bottom:12px;display:flex;align-items:center;gap:8px}
+.form-field{margin-bottom:10px}
+.form-field label{display:block;font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px}
+.form-field input,.form-field textarea{width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:12px 14px;color:var(--text);font-family:'Outfit',sans-serif;font-size:14px;outline:none;transition:border-color .2s;resize:none}
+.form-field input:focus,.form-field textarea:focus{border-color:var(--accent)}
+.form-field textarea{min-height:80px}
 
-/* ─── MAIN SCROLL ─── */
-.main-scroll {
-  flex: 1;
-  overflow-y: auto;
-  overscroll-behavior: contain;
-  scrollbar-width: none;
-}
-.main-scroll::-webkit-scrollbar { display: none; }
+/* CASHBACK TOGGLE */
+.cashback-toggle{display:flex;align-items:center;justify-content:space-between;background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:14px;cursor:pointer}
+.cashback-toggle-left{display:flex;align-items:center;gap:12px}
+.cashback-toggle-left .icon{font-size:24px}
+.cashback-toggle-left h4{font-size:14px;font-weight:600}
+.cashback-toggle-left p{font-size:11px;color:var(--text2)}
+.toggle-switch{width:42px;height:24px;background:var(--surface3);border-radius:12px;position:relative;transition:background .2s;flex-shrink:0}
+.toggle-switch.on{background:var(--accent)}
+.toggle-knob{width:18px;height:18px;background:#fff;border-radius:50%;position:absolute;top:3px;left:3px;transition:left .2s;box-shadow:0 2px 4px rgba(0,0,0,.3)}
+.toggle-switch.on .toggle-knob{left:21px}
 
-/* ─── VIEWS ─── */
-.view { display: none; padding: 16px; }
-.view.active { display: block; }
+/* DASHBOARD */
+.dash-header{display:flex;align-items:center;gap:14px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px;margin-bottom:16px}
+.dash-avatar{width:52px;height:52px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--accent2));display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:700}
+.dash-name{font-size:16px;font-weight:700;margin-bottom:2px}
+.dash-handle{font-size:12px;color:var(--text3)}
+.stats-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px}
+.stat-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px;text-align:center}
+.stat-card .icon{font-size:24px;margin-bottom:8px}
+.stat-card .value{font-size:22px;font-weight:800;color:var(--text);margin-bottom:4px}
+.stat-card .label{font-size:11px;color:var(--text3)}
+.cashback-card{background:linear-gradient(135deg,#1a1a3e,#2d1f4e);border:1px solid rgba(108,99,255,.3);border-radius:var(--radius);padding:20px;margin-bottom:16px;position:relative;overflow:hidden}
+.cashback-card::before{content:'';position:absolute;top:-30px;right:-30px;width:120px;height:120px;background:radial-gradient(circle,rgba(108,99,255,.3),transparent 70%);border-radius:50%}
+.cashback-card h3{font-size:13px;color:var(--text2);margin-bottom:4px}
+.cashback-amount{font-size:36px;font-weight:800;color:var(--gold);margin-bottom:4px}
+.cashback-amount span{font-size:16px}
+.cashback-card p{font-size:12px;color:var(--text3);margin-bottom:14px}
+.cashback-progress-wrap{background:rgba(255,255,255,.1);border-radius:4px;height:6px}
+.cashback-progress{background:linear-gradient(90deg,var(--accent),var(--gold));border-radius:4px;height:6px;transition:width .5s}
+.progress-label{display:flex;justify-content:space-between;font-size:10px;color:var(--text3);margin-top:6px}
+.orders-title{font-size:15px;font-weight:700;margin-bottom:12px}
+.order-item{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:10px;display:flex;gap:12px;align-items:center}
+.order-icon{width:40px;height:40px;border-radius:10px;background:var(--surface2);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
+.order-info{flex:1}
+.order-id{font-size:12px;color:var(--text3);margin-bottom:2px}
+.order-items-text{font-size:13px;font-weight:600;margin-bottom:4px}
+.order-status{font-size:10px;font-weight:600;padding:2px 8px;border-radius:20px}
+.status-pending{background:rgba(255,209,102,.15);color:var(--gold)}
+.status-delivered{background:rgba(67,233,123,.15);color:var(--accent3)}
+.order-price{font-size:14px;font-weight:700;color:var(--gold)}
 
-/* ─── BOOKS GRID ─── */
-.books-grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 12px;
-}
+/* BOTTOM NAV */
+.bottom-nav{background:var(--surface);border-top:1px solid var(--border);display:flex;flex-shrink:0;padding-bottom:env(safe-area-inset-bottom,0px)}
+.nav-item{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:10px 0 8px;cursor:pointer;position:relative;gap:3px;transition:opacity .2s}
+.nav-item:active{opacity:.7}
+.nav-icon{font-size:20px;line-height:1;position:relative}
+.nav-label{font-size:10px;color:var(--text3);font-weight:500}
+.nav-item.active .nav-label{color:var(--accent)}
+.nav-indicator{position:absolute;top:6px;width:24px;height:3px;background:var(--accent);border-radius:0 0 3px 3px;opacity:0;transition:opacity .2s}
+.nav-item.active .nav-indicator{opacity:1}
 
-.book-card {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  overflow: hidden;
-  cursor: pointer;
-  transition: transform 0.2s, box-shadow 0.2s;
-  position: relative;
-}
-.book-card:active { transform: scale(0.97); }
+/* TOAST */
+.toast{position:fixed;bottom:80px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--surface3);border:1px solid var(--border);color:var(--text);padding:10px 18px;border-radius:20px;font-size:13px;font-weight:500;z-index:999;opacity:0;pointer-events:none;transition:all .3s;white-space:nowrap;backdrop-filter:blur(10px);display:flex;gap:6px;align-items:center}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 
-.book-card-img {
-  width: 100%;
-  aspect-ratio: 3/4;
-  object-fit: cover;
-  background: var(--surface2);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 48px;
-  position: relative;
-  overflow: hidden;
-}
-.book-card-img .fake-cover {
-  width: 100%;
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  font-size: 44px;
-  background: var(--grad);
-}
-.book-card-img .cover-img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  display: block;
-}
-.cart-item-cover { overflow: hidden; }
-.cart-item-cover .cover-img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  display: block;
-}
-.cart-item-cover .fake-cover {
-  width: 100%;
-  height: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 28px;
-  border-radius: 8px;
-}
-.modal-cover .cover-img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  display: block;
-  border-radius: 12px;
-}
-.modal-cover.cover-has-photo {
-  padding: 0;
-  overflow: hidden;
-}
-.book-badge {
-  position: absolute;
-  top: 8px; right: 8px;
-  background: var(--accent2);
-  color: #fff;
-  font-size: 10px;
-  font-weight: 700;
-  padding: 3px 7px;
-  border-radius: 6px;
-}
-.book-badge.new { background: var(--accent3); color: #000; }
+/* SUCCESS */
+.success-wrap{display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:40px 24px;min-height:60vh}
+.success-anim{width:90px;height:90px;background:linear-gradient(135deg,var(--accent3),#00c896);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:42px;margin-bottom:24px;animation:popIn .5s cubic-bezier(.34,1.56,.64,1)}
+@keyframes popIn{from{transform:scale(0);opacity:0}to{transform:scale(1);opacity:1}}
+.success-wrap h2{font-size:24px;font-weight:800;margin-bottom:8px}
+.success-wrap p{color:var(--text2);font-size:14px;line-height:1.6;margin-bottom:28px}
 
-.book-card-body { padding: 10px; }
-.book-card-title {
-  font-size: 13px;
-  font-weight: 600;
-  line-height: 1.3;
-  margin-bottom: 4px;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-}
-.book-card-author {
-  font-size: 11px;
-  color: var(--text2);
-  margin-bottom: 8px;
-}
-.book-card-footer {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-.book-price {
-  font-size: 14px;
-  font-weight: 700;
-  color: var(--gold);
-}
-.add-btn {
-  width: 28px; height: 28px;
-  background: var(--accent);
-  border: none;
-  border-radius: 8px;
-  color: #fff;
-  font-size: 16px;
-  cursor: pointer;
-  display: flex; align-items: center; justify-content: center;
-  transition: all 0.2s;
-  flex-shrink: 0;
-}
-.add-btn:active { transform: scale(0.88); }
-.add-btn.added { background: var(--accent3); color: #000; }
+/* LOADING */
+.loading-overlay{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:200;display:none;align-items:center;justify-content:center;flex-direction:column;gap:16px;backdrop-filter:blur(4px)}
+.loading-overlay.show{display:flex}
+.spinner{width:48px;height:48px;border:4px solid rgba(255,255,255,.1);border-top-color:var(--accent);border-radius:50%;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.loading-text{font-size:14px;color:var(--text2)}
 
-/* ─── BOOK DETAIL MODAL ─── */
-.modal-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(0,0,0,0.7);
-  z-index: 100;
-  display: flex;
-  align-items: flex-end;
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity 0.3s;
-  backdrop-filter: blur(4px);
-}
-.modal-overlay.open {
-  opacity: 1;
-  pointer-events: all;
-}
-.modal-sheet {
-  background: var(--surface);
-  border-radius: 20px 20px 0 0;
-  width: 100%;
-  max-height: 88vh;
-  overflow-y: auto;
-  transform: translateY(100%);
-  transition: transform 0.35s cubic-bezier(0.34, 1.1, 0.64, 1);
-}
-.modal-overlay.open .modal-sheet { transform: translateY(0); }
-
-.modal-handle {
-  width: 36px; height: 4px;
-  background: var(--border);
-  border-radius: 2px;
-  margin: 12px auto 0;
-}
-.modal-body { padding: 20px; }
-
-.modal-cover {
-  width: 100%;
-  height: 200px;
-  border-radius: 12px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 80px;
-  margin-bottom: 20px;
-  background: var(--surface2);
-}
-
-.modal-title {
-  font-family: 'Lora', serif;
-  font-size: 22px;
-  font-weight: 600;
-  line-height: 1.3;
-  margin-bottom: 6px;
-}
-.modal-author { color: var(--text2); font-size: 13px; margin-bottom: 12px; }
-
-.modal-tags { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 16px; }
-.tag {
-  background: var(--surface2);
-  border: 1px solid var(--border);
-  padding: 4px 10px;
-  border-radius: 20px;
-  font-size: 11px;
-  color: var(--text2);
-}
-
-.modal-desc {
-  color: var(--text2);
-  line-height: 1.7;
-  font-size: 13px;
-  margin-bottom: 20px;
-}
-
-.modal-footer {
-  display: flex;
-  gap: 12px;
-  align-items: center;
-  padding: 16px 0 20px;
-  border-top: 1px solid var(--border);
-}
-.modal-price {
-  font-size: 24px;
-  font-weight: 800;
-  color: var(--gold);
-  flex: 1;
-}
-.modal-price small { font-size: 13px; color: var(--text3); font-weight: 400; display: block; }
-
-.btn-primary {
-  padding: 13px 24px;
-  background: var(--accent);
-  color: #fff;
-  border: none;
-  border-radius: 12px;
-  font-family: 'Outfit', sans-serif;
-  font-size: 14px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s;
-  display: flex; align-items: center; gap: 8px;
-}
-.btn-primary:active { transform: scale(0.97); opacity: 0.9; }
-.btn-primary.full { width: 100%; justify-content: center; }
-.btn-primary.success { background: var(--accent3); color: #000; }
-.btn-secondary {
-  padding: 13px 20px;
-  background: var(--surface2);
-  color: var(--text);
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  font-family: 'Outfit', sans-serif;
-  font-size: 14px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-/* ─── CART VIEW ─── */
-.cart-empty {
-  text-align: center;
-  padding: 60px 20px;
-  color: var(--text3);
-}
-.cart-empty .icon { font-size: 56px; margin-bottom: 16px; }
-.cart-empty h3 { font-size: 18px; color: var(--text2); margin-bottom: 8px; }
-
-.cart-item {
-  display: flex;
-  gap: 12px;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  padding: 12px;
-  margin-bottom: 10px;
-  align-items: center;
-}
-.cart-item-cover {
-  width: 54px; height: 72px;
-  border-radius: 8px;
-  background: var(--surface2);
-  display: flex; align-items: center; justify-content: center;
-  font-size: 28px;
-  flex-shrink: 0;
-}
-.cart-item-info { flex: 1; min-width: 0; }
-.cart-item-title {
-  font-size: 13px; font-weight: 600;
-  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-  margin-bottom: 4px;
-}
-.cart-item-author { font-size: 11px; color: var(--text2); margin-bottom: 8px; }
-.cart-item-controls { display: flex; align-items: center; gap: 8px; }
-.qty-btn {
-  width: 26px; height: 26px;
-  background: var(--surface3);
-  border: none; border-radius: 6px;
-  color: var(--text);
-  font-size: 14px;
-  cursor: pointer;
-  display: flex; align-items: center; justify-content: center;
-}
-.qty-num { font-size: 13px; font-weight: 600; min-width: 20px; text-align: center; }
-.cart-item-price { font-size: 14px; font-weight: 700; color: var(--gold); }
-.cart-item-del {
-  width: 30px; height: 30px;
-  background: none; border: none;
-  color: var(--text3);
-  font-size: 16px;
-  cursor: pointer;
-  border-radius: 6px;
-  display: flex; align-items: center; justify-content: center;
-  transition: color 0.2s;
-}
-.cart-item-del:hover { color: var(--accent2); }
-
-.cart-summary {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  padding: 16px;
-  margin-top: 4px;
-}
-.cart-summary-row {
-  display: flex; justify-content: space-between;
-  margin-bottom: 8px; font-size: 13px; color: var(--text2);
-}
-.cart-summary-row.total {
-  font-size: 16px; font-weight: 700;
-  color: var(--text);
-  padding-top: 10px;
-  border-top: 1px solid var(--border);
-  margin-top: 8px; margin-bottom: 16px;
-}
-.cart-summary-row .green { color: var(--accent3); }
-.cart-summary-row .gold { color: var(--gold); }
-
-/* ─── CHECKOUT ─── */
-.checkout-section { margin-bottom: 20px; }
-.checkout-section h3 {
-  font-size: 15px; font-weight: 700;
-  margin-bottom: 12px;
-  display: flex; align-items: center; gap: 8px;
-}
-.form-field { margin-bottom: 10px; }
-.form-field label {
-  display: block;
-  font-size: 11px;
-  color: var(--text3);
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  margin-bottom: 6px;
-}
-.form-field input, .form-field textarea {
-  width: 100%;
-  background: var(--surface2);
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  padding: 12px 14px;
-  color: var(--text);
-  font-family: 'Outfit', sans-serif;
-  font-size: 14px;
-  outline: none;
-  transition: border-color 0.2s;
-  resize: none;
-}
-.form-field input:focus, .form-field textarea:focus { border-color: var(--accent); }
-.form-field textarea { min-height: 80px; }
-
-/* ─── CASHBACK TOGGLE ─── */
-.cashback-toggle {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  background: var(--surface2);
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  padding: 14px;
-  margin-bottom: 14px;
-  cursor: pointer;
-}
-.cashback-toggle-left { display: flex; align-items: center; gap: 12px; }
-.cashback-toggle-left .icon { font-size: 24px; }
-.cashback-toggle-left h4 { font-size: 14px; font-weight: 600; }
-.cashback-toggle-left p { font-size: 11px; color: var(--text2); }
-.toggle-switch {
-  width: 42px; height: 24px;
-  background: var(--surface3);
-  border-radius: 12px;
-  position: relative;
-  transition: background 0.2s;
-  flex-shrink: 0;
-}
-.toggle-switch.on { background: var(--accent); }
-.toggle-knob {
-  width: 18px; height: 18px;
-  background: #fff;
-  border-radius: 50%;
-  position: absolute;
-  top: 3px; left: 3px;
-  transition: left 0.2s;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.3);
-}
-.toggle-switch.on .toggle-knob { left: 21px; }
-
-/* ─── DASHBOARD ─── */
-.dash-header {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  padding: 16px;
-  margin-bottom: 16px;
-}
-.dash-avatar {
-  width: 52px; height: 52px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, var(--accent), var(--accent2));
-  display: flex; align-items: center; justify-content: center;
-  font-size: 20px; font-weight: 700;
-}
-.dash-name { font-size: 16px; font-weight: 700; margin-bottom: 2px; }
-.dash-handle { font-size: 12px; color: var(--text3); }
-
-.stats-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 10px;
-  margin-bottom: 16px;
-}
-.stat-card {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  padding: 16px;
-  text-align: center;
-}
-.stat-card .icon { font-size: 24px; margin-bottom: 8px; }
-.stat-card .value {
-  font-size: 22px; font-weight: 800;
-  color: var(--text);
-  margin-bottom: 4px;
-}
-.stat-card .label { font-size: 11px; color: var(--text3); }
-
-/* Cashback card */
-.cashback-card {
-  background: linear-gradient(135deg, #1a1a3e, #2d1f4e);
-  border: 1px solid rgba(108,99,255,0.3);
-  border-radius: var(--radius);
-  padding: 20px;
-  margin-bottom: 16px;
-  position: relative;
-  overflow: hidden;
-}
-.cashback-card::before {
-  content: '';
-  position: absolute;
-  top: -30px; right: -30px;
-  width: 120px; height: 120px;
-  background: radial-gradient(circle, rgba(108,99,255,0.3), transparent 70%);
-  border-radius: 50%;
-}
-.cashback-card h3 { font-size: 13px; color: var(--text2); margin-bottom: 4px; }
-.cashback-amount {
-  font-size: 36px; font-weight: 800;
-  color: var(--gold);
-  margin-bottom: 4px;
-}
-.cashback-amount span { font-size: 16px; }
-.cashback-card p { font-size: 12px; color: var(--text3); margin-bottom: 14px; }
-.cashback-progress-wrap { background: rgba(255,255,255,0.1); border-radius: 4px; height: 6px; }
-.cashback-progress { background: linear-gradient(90deg, var(--accent), var(--gold)); border-radius: 4px; height: 6px; transition: width 0.5s; }
-.cashback-card .progress-label { display: flex; justify-content: space-between; font-size: 10px; color: var(--text3); margin-top: 6px; }
-
-/* Orders list */
-.orders-title { font-size: 15px; font-weight: 700; margin-bottom: 12px; }
-.order-item {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  padding: 14px;
-  margin-bottom: 10px;
-  display: flex;
-  gap: 12px;
-  align-items: center;
-}
-.order-icon {
-  width: 40px; height: 40px;
-  border-radius: 10px;
-  background: var(--surface2);
-  display: flex; align-items: center; justify-content: center;
-  font-size: 18px;
-  flex-shrink: 0;
-}
-.order-info { flex: 1; }
-.order-id { font-size: 12px; color: var(--text3); margin-bottom: 2px; }
-.order-items-text { font-size: 13px; font-weight: 600; margin-bottom: 4px; }
-.order-meta { display: flex; gap: 8px; align-items: center; }
-.order-status {
-  font-size: 10px; font-weight: 600;
-  padding: 2px 8px; border-radius: 20px;
-}
-.status-pending { background: rgba(255,209,102,0.15); color: var(--gold); }
-.status-delivered { background: rgba(67,233,123,0.15); color: var(--accent3); }
-.status-processing { background: rgba(108,99,255,0.15); color: var(--accent); }
-.order-price { font-size: 14px; font-weight: 700; color: var(--gold); }
-
-/* ─── BOTTOM NAV ─── */
-.bottom-nav {
-  background: var(--surface);
-  border-top: 1px solid var(--border);
-  display: flex;
-  flex-shrink: 0;
-  padding-bottom: env(safe-area-inset-bottom, 0px);
-}
-.nav-item {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 10px 0 8px;
-  cursor: pointer;
-  position: relative;
-  gap: 3px;
-  transition: opacity 0.2s;
-}
-.nav-item:active { opacity: 0.7; }
-.nav-icon { font-size: 20px; line-height: 1; position: relative; }
-.nav-label { font-size: 10px; color: var(--text3); font-weight: 500; }
-.nav-item.active .nav-label { color: var(--accent); }
-.nav-item.active .nav-icon { filter: none; }
-.nav-indicator {
-  position: absolute;
-  top: 6px;
-  width: 24px; height: 3px;
-  background: var(--accent);
-  border-radius: 0 0 3px 3px;
-  transition: opacity 0.2s;
-  opacity: 0;
-}
-.nav-item.active .nav-indicator { opacity: 1; }
-
-/* ─── TOAST ─── */
-.toast {
-  position: fixed;
-  bottom: 80px;
-  left: 50%; transform: translateX(-50%) translateY(20px);
-  background: var(--surface3);
-  border: 1px solid var(--border);
-  color: var(--text);
-  padding: 10px 18px;
-  border-radius: 20px;
-  font-size: 13px;
-  font-weight: 500;
-  z-index: 999;
-  opacity: 0;
-  pointer-events: none;
-  transition: all 0.3s;
-  white-space: nowrap;
-  backdrop-filter: blur(10px);
-  display: flex; gap: 6px; align-items: center;
-}
-.toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
-
-/* ─── SUCCESS SCREEN ─── */
-.success-screen {
-  display: none;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  text-align: center;
-  padding: 40px 24px;
-  height: 100%;
-}
-.success-screen.show { display: flex; }
-.success-anim {
-  width: 90px; height: 90px;
-  background: linear-gradient(135deg, var(--accent3), #00c896);
-  border-radius: 50%;
-  display: flex; align-items: center; justify-content: center;
-  font-size: 42px;
-  margin-bottom: 24px;
-  animation: popIn 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
-}
-@keyframes popIn {
-  from { transform: scale(0); opacity: 0; }
-  to { transform: scale(1); opacity: 1; }
-}
-.success-screen h2 { font-size: 24px; font-weight: 800; margin-bottom: 8px; }
-.success-screen p { color: var(--text2); font-size: 14px; line-height: 1.6; margin-bottom: 28px; }
-
-/* ─── PAGE TITLE ─── */
-.page-title {
-  font-size: 20px; font-weight: 800;
-  margin-bottom: 16px;
-  display: flex; align-items: center; gap: 8px;
-}
-
-/* ─── SECTION HEADER ─── */
-.section-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 12px;
-}
-.section-title { font-size: 14px; font-weight: 700; }
-.see-all { font-size: 12px; color: var(--accent); cursor: pointer; }
-
-/* Skeleton loader */
-@keyframes shimmer {
-  0% { background-position: -200% 0; }
-  100% { background-position: 200% 0; }
-}
-.skeleton {
-  background: linear-gradient(90deg, var(--surface) 25%, var(--surface2) 50%, var(--surface) 75%);
-  background-size: 200% 100%;
-  animation: shimmer 1.5s infinite;
-  border-radius: 8px;
-}
+.page-title{font-size:20px;font-weight:800;margin-bottom:16px;display:flex;align-items:center;gap:8px}
+.section-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.section-title{font-size:14px;font-weight:700}
 </style>
 </head>
 <body>
 <div id="app">
-  <!-- HEADER -->
   <div class="header">
     <div class="header-logo">
       <div class="icon">📚</div>
-      <span>Bir Ilm<b>Kitoblar</b></span>
+      <span>Bir Ilm Kitob</span>
     </div>
     <div class="header-right">
       <div class="cart-btn" id="cartBtn" onclick="switchTab('cart')">
-        🛒
-        <div class="cart-badge" id="cartBadge">0</div>
+        🛒<div class="cart-badge" id="cartBadge">0</div>
       </div>
       <div class="user-avatar" id="userAvatar" onclick="switchTab('dashboard')">B</div>
     </div>
   </div>
 
-  <!-- MAIN SCROLL -->
   <div class="main-scroll" id="mainScroll">
-
-    <!-- ═══ CATALOG VIEW ═══ -->
+    <!-- CATALOG -->
     <div class="view active" id="view-catalog">
       <div class="search-wrap" style="padding:16px 16px 0">
         <div class="search-box">
@@ -838,26 +236,24 @@ html, body {
       </div>
     </div>
 
-    <!-- ═══ CART VIEW ═══ -->
+    <!-- CART -->
     <div class="view" id="view-cart">
       <div class="page-title">🛒 Savat</div>
       <div id="cartContent"></div>
     </div>
 
-    <!-- ═══ CHECKOUT VIEW ═══ -->
+    <!-- CHECKOUT -->
     <div class="view" id="view-checkout">
       <div class="page-title">📦 Buyurtma</div>
       <div id="checkoutContent"></div>
     </div>
 
-    <!-- ═══ DASHBOARD VIEW ═══ -->
+    <!-- DASHBOARD -->
     <div class="view" id="view-dashboard">
       <div id="dashboardContent"></div>
     </div>
-
   </div>
 
-  <!-- BOTTOM NAV -->
   <div class="bottom-nav">
     <div class="nav-item active" id="nav-catalog" onclick="switchTab('catalog')">
       <div class="nav-indicator"></div>
@@ -877,7 +273,7 @@ html, body {
   </div>
 </div>
 
-<!-- BOOK DETAIL MODAL -->
+<!-- MODAL -->
 <div class="modal-overlay" id="bookModal" onclick="closeModal(event)">
   <div class="modal-sheet" id="modalSheet">
     <div class="modal-handle"></div>
@@ -885,35 +281,57 @@ html, body {
   </div>
 </div>
 
-<!-- TOAST -->
+<!-- LOADING -->
+<div class="loading-overlay" id="loadingOverlay">
+  <div class="spinner"></div>
+  <div class="loading-text">Buyurtma yuborilmoqda...</div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <script>
 // ═══════════════════════════════════
+// SOZLAMALAR — faqat shu joyni o'zgartiring
+// ═══════════════════════════════════
+
+// Railway ga deploy qilgandan keyin shu URLni yangilang:
+// const API_URL = "https://sizning-railway-url.up.railway.app";
+// Hozircha bot to'g'ridan-to'g'ri Telegram API orqali ishlaydi:
+const API_URL = ""; // Railway URL shu yerga
+
+const BOT_TOKEN = "6267861891:AAF0EjKPTa7e4ediOVNCgGbGn8bJIwDzeDw";
+const ADMIN_ID  = 917583027;
+
+// ═══════════════════════════════════
 // DATA
 // ═══════════════════════════════════
-const API_BASE = (() => {
-  const m = document.querySelector('meta[name="api-base"]');
-  if (m && m.content && m.content.trim()) return m.content.trim().replace(/\/$/, '');
-  const h = location.hostname;
-  if (h === 'localhost' || h === '127.0.0.1') return 'http://localhost:3001';
-  return location.origin.replace(/\/$/, '');
-})();
+const BOOKS = [
+  {id:1,emoji:"📗",title:"O'tkan kunlar",author:"Abdulla Qodiriy",price:35000,genre:"Roman",desc:"O'zbek adabiyotining durdonasi. Otabek va Kumush muhabbati haqida tarixiy roman.",badge:"Bestseller",grad:"linear-gradient(135deg,#1a4a2e,#2d8a5a)"},
+  {id:2,emoji:"📘",title:"Mehrobdan chayon",author:"Abdulla Qodiriy",price:32000,genre:"Roman",desc:"Anvar va Ra'no muhabbati, mansab va xiyonat to'qnashuvi haqida dramatik roman.",grad:"linear-gradient(135deg,#1a2a4a,#2d5a8a)"},
+  {id:3,emoji:"📙",title:"Sariq devni minib",author:"Xudoiberdi To'xtaboyev",price:28000,genre:"Bolalar",desc:"Bolalar uchun sarguzasht hikoya. Quvnoq va ta'limli.",badge:"new",grad:"linear-gradient(135deg,#4a2a1a,#8a5a2d)"},
+  {id:4,emoji:"📕",title:"Atomic Habits",author:"James Clear",price:65000,genre:"Motivatsiya",desc:"Kichik o'zgarishlar qanday qilib katta natijalar berishi haqida amaliy qo'llanma.",badge:"Yangi",grad:"linear-gradient(135deg,#4a1a1a,#8a2d2d)"},
+  {id:5,emoji:"📔",title:"Qorajon",author:"Nazar Eshonqul",price:24000,genre:"Hikoya",desc:"Zamonaviy o'zbek nasri namunasi.",grad:"linear-gradient(135deg,#2a1a4a,#5a2d8a)"},
+  {id:6,emoji:"📒",title:"Rich Dad Poor Dad",author:"Robert Kiyosaki",price:72000,genre:"Moliya",desc:"Pul haqidagi fikrlashni o'zgartiruvchi eng mashhur moliyaviy kitob.",badge:"Bestseller",grad:"linear-gradient(135deg,#1a3a1a,#2d6a2d)"},
+  {id:7,emoji:"📓",title:"1984",author:"George Orwell",price:45000,genre:"Roman",desc:"Totalitar jamiyat haqida eng mashhur distopik roman.",grad:"linear-gradient(135deg,#1a1a1a,#3a3a3a)"},
+  {id:8,emoji:"📃",title:"Hobbit",author:"J.R.R. Tolkien",price:55000,genre:"Fantasy",desc:"Bilbo Begginzning ajoyib safari.",badge:"new",grad:"linear-gradient(135deg,#1a3a2a,#2d6a4a)"},
+  {id:9,emoji:"📜",title:"Iqtisodiyot asoslari",author:"N.G. Mansur",price:38000,genre:"Iqtisod",desc:"Iqtisodiyot bo'yicha zamonaviy darslik.",grad:"linear-gradient(135deg,#2a2a1a,#6a6a2d)"},
+  {id:10,emoji:"📋",title:"Kimyo sirlari",author:"U. Nazarov",price:42000,genre:"Fan",desc:"Kimyo fanining asosiy qonunlari.",badge:"new",grad:"linear-gradient(135deg,#1a2a3a,#2d4a6a)"},
+];
 
-const GENRES = ['Barchasi', 'Roman', 'Motivatsiya', 'Moliya', 'Bolalar', 'Fantasy', 'Hikoya', 'Iqtisod', 'Fan'];
-
-let booksCatalog = []; // API: MongoDB _id + image, description, ...
-let orders = [];
-let cart = {}; // { bookId: qty }
-let selectedGenre = 'Barchasi';
-let searchQ = '';
-let useCashback = false;
-let cashbackBalance = 0;
+const GENRES = ["Barchasi","Roman","Motivatsiya","Moliya","Bolalar","Fantasy","Hikoya","Iqtisod","Fan"];
 const CASHBACK_RATE = 0.05;
 
-let tgUser = { first_name: 'Barno', username: 'barno_orolova', id: 123456 };
+let cart = {};
+let selectedGenre = "Barchasi";
+let searchQ = "";
+let useCashback = false;
+let cashbackBalance = 0;
+let userOrders = [];
+
+// Telegram user
+let tgUser = {id: 0, first_name: "Mehmon", username: ""};
 try {
-  if (window.Telegram && window.Telegram.WebApp) {
+  if (window.Telegram?.WebApp) {
     window.Telegram.WebApp.ready();
     window.Telegram.WebApp.expand();
     const u = window.Telegram.WebApp.initDataUnsafe?.user;
@@ -921,148 +339,38 @@ try {
   }
 } catch(e){}
 
-function getInitData() {
-  try {
-    const raw = window.Telegram?.WebApp?.initData;
-    if (raw && String(raw).length) return raw;
-  } catch (e) {}
-  const h = location.hostname;
-  if (h === 'localhost' || h === '127.0.0.1') {
-    return 'user=' + encodeURIComponent(JSON.stringify({
-      id: tgUser.id || 123456789,
-      first_name: tgUser.first_name || 'Test',
-      username: tgUser.username || 'testuser',
-    }));
-  }
-  return '';
-}
-
-function bookDesc(b) {
-  return b.description || b.desc || '';
-}
-
-/** Rasm: to'liq URL yoki API serverdagi `/covers/...` nisbiy yo'l */
-function bookImageUrl(b) {
-  if (!b.image) return '';
-  const u = String(b.image).trim();
-  if (/^https?:\/\//i.test(u) || u.startsWith('//')) return u;
-  const base = API_BASE.replace(/\/$/, '');
-  return base + (u.startsWith('/') ? u : '/' + u);
-}
-
-function bookCoverHtml(b) {
-  const grad = b.grad || 'linear-gradient(135deg,#2a2a2a,#4a4a4a)';
-  const em = b.emoji || '📚';
-  if (b.image) {
-    const src = bookImageUrl(b);
-    return `<img class="cover-img" src="${src}" alt="" loading="lazy">`;
-  }
-  return `<div class="fake-cover" style="background:${grad}">${em}</div>`;
-}
-
-async function loadBooks() {
-  try {
-    const r = await fetch(API_BASE + '/api/books');
-    const j = await r.json();
-    if (j.success && Array.isArray(j.data)) booksCatalog = j.data;
-    else booksCatalog = [];
-  } catch (e) {
-    booksCatalog = [];
-    showToast("Serverga ulanib bo'lmadi — api-base URL ni tekshiring");
-  }
-}
-
-async function loginAndProfile() {
-  const initData = getInitData();
-  if (!initData) return;
-  try {
-    await fetch(API_BASE + '/api/auth/login', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ initData }),
-    });
-    const pr = await fetch(API_BASE + '/api/user/profile', {
-      headers: { 'x-telegram-init-data': initData },
-    });
-    if (pr.ok) {
-      const pj = await pr.json();
-      if (pj.success && pj.data && typeof pj.data.cashback_balance === 'number') {
-        cashbackBalance = pj.data.cashback_balance;
-      }
-    }
-  } catch (e) {}
-}
-
-async function loadOrders() {
-  const initData = getInitData();
-  if (!initData) return;
-  try {
-    const r = await fetch(API_BASE + '/api/orders', {
-      headers: { 'x-telegram-init-data': initData },
-    });
-    if (!r.ok) return;
-    const j = await r.json();
-    if (!j.success || !Array.isArray(j.data)) return;
-    orders = j.data.map((o) => ({
-      id: '#' + o.order_id,
-      items: (o.items || []).map((i) => i.title).join(', '),
-      total: o.total,
-      status: o.status,
-      date: new Date(o.createdAt).toLocaleDateString('uz-UZ', {
-        day: 'numeric',
-        month: 'short',
-        year: 'numeric',
-      }),
-    }));
-  } catch (e) {}
-}
-
 // ═══════════════════════════════════
 // INIT
 // ═══════════════════════════════════
-window.onload = async () => {
-  const grid = document.getElementById('booksGrid');
-  if (grid) grid.innerHTML = '<div style="padding:48px;text-align:center;color:var(--text2)">Yuklanmoqda…</div>';
-  await loadBooks();
-  await loginAndProfile();
-  await loadOrders();
+window.onload = () => {
   renderFilters();
   renderBooks();
   renderDashboard();
-  updateAvatar();
+  const name = tgUser.first_name || "U";
+  document.getElementById("userAvatar").textContent = name[0].toUpperCase();
 };
 
-function updateAvatar() {
-  const name = tgUser.first_name || 'U';
-  document.getElementById('userAvatar').textContent = name[0].toUpperCase();
-}
-
 // ═══════════════════════════════════
-// NAVIGATION
+// NAV
 // ═══════════════════════════════════
 function switchTab(tab) {
-  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
-  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-
-  document.getElementById('view-' + tab)?.classList.add('active');
-  document.getElementById('nav-' + tab)?.classList.add('active');
-
-  const scroll = document.getElementById('mainScroll');
-  scroll.scrollTop = 0;
-
-  if (tab === 'cart') renderCart();
-  if (tab === 'checkout') renderCheckout();
-  if (tab === 'dashboard') renderDashboard();
+  document.querySelectorAll(".view").forEach(v => v.classList.remove("active"));
+  document.querySelectorAll(".nav-item").forEach(n => n.classList.remove("active"));
+  document.getElementById("view-" + tab)?.classList.add("active");
+  document.getElementById("nav-" + tab)?.classList.add("active");
+  document.getElementById("mainScroll").scrollTop = 0;
+  if (tab === "cart") renderCart();
+  if (tab === "checkout") renderCheckout();
+  if (tab === "dashboard") renderDashboard();
 }
 
 // ═══════════════════════════════════
-// FILTERS & SEARCH
+// BOOKS
 // ═══════════════════════════════════
 function renderFilters() {
-  const wrap = document.getElementById('filtersWrap');
-  wrap.innerHTML = GENRES.map(g => `
-    <div class="filter-chip ${g === selectedGenre ? 'active' : ''}" onclick="selectGenre('${g}')">${g}</div>
-  `).join('');
+  document.getElementById("filtersWrap").innerHTML = GENRES.map(g =>
+    `<div class="filter-chip ${g===selectedGenre?"active":""}" onclick="selectGenre('${g}')">${g}</div>`
+  ).join("");
 }
 
 function selectGenre(g) {
@@ -1072,53 +380,39 @@ function selectGenre(g) {
 }
 
 function filterBooks() {
-  searchQ = document.getElementById('searchInput').value.toLowerCase();
+  searchQ = document.getElementById("searchInput").value.toLowerCase();
   renderBooks();
 }
 
-function getFilteredBooks() {
-  return booksCatalog.filter(b => {
-    const matchGenre = selectedGenre === 'Barchasi' || b.genre === selectedGenre;
-    const matchSearch = !searchQ || b.title.toLowerCase().includes(searchQ) || b.author.toLowerCase().includes(searchQ);
-    return matchGenre && matchSearch;
+function getFiltered() {
+  return BOOKS.filter(b => {
+    const mg = selectedGenre === "Barchasi" || b.genre === selectedGenre;
+    const ms = !searchQ || b.title.toLowerCase().includes(searchQ) || b.author.toLowerCase().includes(searchQ);
+    return mg && ms;
   });
 }
 
-// ═══════════════════════════════════
-// CATALOG
-// ═══════════════════════════════════
 function renderBooks() {
-  const books = getFilteredBooks();
-  const grid = document.getElementById('booksGrid');
-  const count = document.getElementById('bookCount');
-  count.textContent = books.length + ' ta kitob';
-
-  if (!books.length) {
-    grid.innerHTML = '<div style="padding:48px;text-align:center;color:var(--text2)">Kitoblar topilmadi. Server ishlayaptimi?</div>';
-    return;
-  }
-
-  grid.innerHTML = books.map(b => {
-    const bid = b._id;
-    const inCart = cart[bid] > 0;
+  const books = getFiltered();
+  document.getElementById("bookCount").textContent = books.length + " ta";
+  document.getElementById("booksGrid").innerHTML = books.map(b => {
+    const inCart = cart[b.id] > 0;
     return `
-    <div class="book-card" onclick="openBook('${bid}')">
+    <div class="book-card" onclick="openBook(${b.id})">
       <div class="book-card-img">
-        ${bookCoverHtml(b)}
-        ${b.badge ? `<div class="book-badge ${b.badge==='new'?'new':''}">${b.badge==='new'?'Yangi':b.badge}</div>` : ''}
+        <div class="fake-cover" style="background:${b.grad}">${b.emoji}</div>
+        ${b.badge ? `<div class="book-badge ${b.badge==="new"?"new":""}">${b.badge==="new"?"Yangi":b.badge}</div>` : ""}
       </div>
       <div class="book-card-body">
         <div class="book-card-title">${b.title}</div>
         <div class="book-card-author">${b.author}</div>
         <div class="book-card-footer">
           <div class="book-price">${fmt(b.price)}</div>
-          <button class="add-btn ${inCart?'added':''}" onclick="quickAdd(event,'${bid}')">
-            ${inCart ? '✓' : '+'}
-          </button>
+          <button class="add-btn ${inCart?"added":""}" onclick="quickAdd(event,${b.id})">${inCart?"✓":"+"}</button>
         </div>
       </div>
     </div>`;
-  }).join('');
+  }).join("");
 }
 
 function quickAdd(e, id) {
@@ -1126,124 +420,95 @@ function quickAdd(e, id) {
   addToCart(id);
 }
 
-// ═══════════════════════════════════
-// BOOK MODAL
-// ═══════════════════════════════════
 function openBook(id) {
-  const b = getBook(id);
+  const b = BOOKS.find(x => x.id === id);
   if (!b) return;
-
-  const bid = b._id;
-  const inCart = cart[bid] > 0;
-  const coverClass = 'modal-cover' + (b.image ? ' cover-has-photo' : '');
-  const coverStyle = b.image ? '' : ` style="background:${b.grad || 'var(--surface2)'}"`;
-  document.getElementById('modalBody').innerHTML = `
-    <div class="${coverClass}"${coverStyle}>${b.image ? bookCoverHtml(b) : (b.emoji || '📚')}</div>
+  const inCart = cart[b.id] > 0;
+  document.getElementById("modalBody").innerHTML = `
+    <div class="modal-cover" style="background:${b.grad}">${b.emoji}</div>
     <div class="modal-title">${b.title}</div>
     <div class="modal-author">✍️ ${b.author}</div>
     <div class="modal-tags">
       <div class="tag">📚 ${b.genre}</div>
-      ${b.badge ? `<div class="tag">🔥 ${b.badge==='new'?'Yangi':b.badge}</div>` : ''}
+      ${b.badge ? `<div class="tag">🔥 ${b.badge==="new"?"Yangi":b.badge}</div>` : ""}
     </div>
-    <div class="modal-desc">${bookDesc(b)}</div>
+    <div class="modal-desc">${b.desc}</div>
     <div class="modal-footer">
-      <div class="modal-price">
-        ${fmt(b.price)}
-        <small>Narx (so'm)</small>
-      </div>
-      <button class="btn-primary ${inCart?'success':''}" id="modalCartBtn" onclick="modalAddToCart('${bid}')">
-        ${inCart ? '✓ Savatda' : '🛒 Savatga'}
+      <div class="modal-price">${fmt(b.price)}<small>so'm</small></div>
+      <button class="btn-primary ${inCart?"success":""}" id="mbtn" onclick="modalAdd(${id})">
+        ${inCart ? "✓ Savatda" : "🛒 Savatga"}
       </button>
-    </div>
-  `;
-  document.getElementById('bookModal').classList.add('open');
+    </div>`;
+  document.getElementById("bookModal").classList.add("open");
 }
 
-function modalAddToCart(id) {
+function modalAdd(id) {
   addToCart(id);
-  const btn = document.getElementById('modalCartBtn');
-  if (btn) { btn.className = 'btn-primary success'; btn.textContent = '✓ Savatda'; }
+  const btn = document.getElementById("mbtn");
+  if (btn) { btn.className = "btn-primary success"; btn.textContent = "✓ Savatda"; }
   renderBooks();
 }
 
 function closeModal(e) {
-  if (e.target === document.getElementById('bookModal')) {
-    document.getElementById('bookModal').classList.remove('open');
+  if (e.target === document.getElementById("bookModal")) {
+    document.getElementById("bookModal").classList.remove("open");
   }
 }
 
 // ═══════════════════════════════════
-// CART LOGIC
+// CART
 // ═══════════════════════════════════
 function addToCart(id) {
-  if (!cart[id]) cart[id] = 0;
-  if (cart[id] === 0) {
-    cart[id] = 1;
-    showToast('✅ Savatga qo\'shildi');
-  } else {
-    cart[id]++;
-    showToast(`🛒 ${getBook(id).title} — ${cart[id]} ta`);
-  }
-  updateCartBadge();
+  cart[id] = (cart[id] || 0) + 1;
+  if (cart[id] === 1) showToast("✅ Savatga qo'shildi");
+  else showToast(`🛒 ${getBook(id).title} — ${cart[id]} ta`);
+  updateBadge();
 }
 
 function removeFromCart(id) {
   delete cart[id];
-  updateCartBadge();
+  updateBadge();
   renderCart();
   renderBooks();
 }
 
-function changeQty(id, delta) {
-  if (!cart[id]) return;
-  cart[id] += delta;
-  if (cart[id] <= 0) { delete cart[id]; }
-  updateCartBadge();
+function changeQty(id, d) {
+  cart[id] = (cart[id] || 0) + d;
+  if (cart[id] <= 0) delete cart[id];
+  updateBadge();
   renderCart();
   renderBooks();
 }
 
-function getBook(id) {
-  const sid = String(id);
-  return booksCatalog.find(x => String(x._id) === sid);
-}
-
+function getBook(id) { return BOOKS.find(x => x.id === id); }
 function getCartCount() { return Object.values(cart).reduce((a,b)=>a+b,0); }
-
 function getCartTotal() {
-  return Object.entries(cart).reduce((sum,[id,qty])=>{
-    const b = getBook(id);
-    return b ? sum + b.price * qty : sum;
+  return Object.entries(cart).reduce((s,[id,q]) => {
+    const b = getBook(Number(id));
+    return b ? s + b.price * q : s;
   }, 0);
 }
 
-function updateCartBadge() {
+function updateBadge() {
   const n = getCartCount();
-  const badge = document.getElementById('cartBadge');
-  badge.textContent = n;
-  badge.classList.toggle('show', n > 0);
+  const b = document.getElementById("cartBadge");
+  b.textContent = n;
+  b.classList.toggle("show", n > 0);
 }
 
-// ═══════════════════════════════════
-// RENDER CART
-// ═══════════════════════════════════
 function renderCart() {
-  const container = document.getElementById('cartContent');
+  const container = document.getElementById("cartContent");
   const entries = Object.entries(cart).filter(([,q])=>q>0);
-
   if (!entries.length) {
     container.innerHTML = `
       <div class="cart-empty">
         <div class="icon">🛒</div>
         <h3>Savat bo'sh</h3>
-        <p>Kitoblar qo'shing va buyurtma bering</p>
-        <button class="btn-primary" style="margin:16px auto 0;display:flex" onclick="switchTab('catalog')">
-          📚 Katalogga o'tish
-        </button>
+        <p>Kitoblar qo'shing</p>
+        <button class="btn-primary" style="margin:16px auto 0;display:flex" onclick="switchTab('catalog')">📚 Katalog</button>
       </div>`;
     return;
   }
-
   const subtotal = getCartTotal();
   const cashbackEarn = Math.round(subtotal * CASHBACK_RATE);
   const discount = useCashback ? Math.min(cashbackBalance, subtotal) : 0;
@@ -1251,66 +516,47 @@ function renderCart() {
 
   container.innerHTML = `
     ${entries.map(([id,qty])=>{
-      const b = getBook(id);
+      const b = getBook(Number(id));
       return b ? `
       <div class="cart-item">
-        <div class="cart-item-cover">${bookCoverHtml(b)}</div>
+        <div class="cart-item-cover" style="background:${b.grad}">${b.emoji}</div>
         <div class="cart-item-info">
           <div class="cart-item-title">${b.title}</div>
           <div class="cart-item-author">${b.author}</div>
           <div class="cart-item-controls">
-            <button class="qty-btn" onclick="changeQty('${id}',-1)">−</button>
+            <button class="qty-btn" onclick="changeQty(${b.id},-1)">−</button>
             <span class="qty-num">${qty}</span>
-            <button class="qty-btn" onclick="changeQty('${id}',1)">+</button>
+            <button class="qty-btn" onclick="changeQty(${b.id},1)">+</button>
           </div>
         </div>
         <div style="display:flex;flex-direction:column;align-items:flex-end;gap:8px">
-          <button class="cart-item-del" onclick="removeFromCart('${id}')">✕</button>
-          <div class="cart-item-price">${fmt(b.price * qty)}</div>
+          <button class="cart-item-del" onclick="removeFromCart(${b.id})">✕</button>
+          <div class="cart-item-price">${fmt(b.price*qty)}</div>
         </div>
-      </div>` : '';
-    }).join('')}
-
+      </div>` : "";
+    }).join("")}
     <div class="cart-summary">
-      <div class="cart-summary-row">
-        <span>Jami (${getCartCount()} ta kitob)</span>
-        <span>${fmt(subtotal)}</span>
+      <div class="cart-summary-row"><span>Jami (${getCartCount()} ta)</span><span>${fmt(subtotal)}</span></div>
+      ${discount > 0 ? `<div class="cart-summary-row"><span>Cashback chegirma</span><span class="green">−${fmt(discount)}</span></div>` : ""}
+      <div class="cart-summary-row"><span>Yetkazib berish</span><span class="green">Bepul</span></div>
+      <div class="cart-summary-row total"><span>To'lash kerak</span><span class="gold">${fmt(total)}</span></div>
+      <div style="background:rgba(67,233,123,.1);border:1px solid rgba(67,233,123,.2);border-radius:10px;padding:10px 12px;margin-bottom:14px;font-size:12px;color:var(--accent3);">
+        💰 Bu buyurtmadan <b>${fmt(cashbackEarn)}</b> so'm cashback yig'asiz
       </div>
-      ${discount > 0 ? `
-      <div class="cart-summary-row">
-        <span>Cashback chegirma</span>
-        <span class="green">−${fmt(discount)}</span>
-      </div>` : ''}
-      <div class="cart-summary-row">
-        <span>Yetkazib berish</span>
-        <span class="green">Bepul</span>
-      </div>
-      <div class="cart-summary-row total">
-        <span>To'lash kerak</span>
-        <span class="gold">${fmt(total)}</span>
-      </div>
-      <div style="background:rgba(67,233,123,0.1);border:1px solid rgba(67,233,123,0.2);border-radius:10px;padding:10px 12px;margin-bottom:14px;font-size:12px;color:var(--accent3);">
-        💰 Bu buyurtmadan <b>${fmt(cashbackEarn)}</b> cashback yig'asiz
-      </div>
-      <button class="btn-primary full" onclick="switchTab('checkout')">
-        📦 Buyurtma berish →
-      </button>
-    </div>
-  `;
+      <button class="btn-primary full" onclick="switchTab('checkout')">📦 Buyurtma berish →</button>
+    </div>`;
 }
 
 // ═══════════════════════════════════
-// RENDER CHECKOUT
+// CHECKOUT
 // ═══════════════════════════════════
 function renderCheckout() {
-  const container = document.getElementById('checkoutContent');
+  const container = document.getElementById("checkoutContent");
   const entries = Object.entries(cart).filter(([,q])=>q>0);
-
   if (!entries.length) {
     container.innerHTML = `<div class="cart-empty"><div class="icon">📦</div><h3>Savat bo'sh</h3></div>`;
     return;
   }
-
   const subtotal = getCartTotal();
   const discount = useCashback ? Math.min(cashbackBalance, subtotal) : 0;
   const total = subtotal - discount;
@@ -1320,22 +566,20 @@ function renderCheckout() {
       <h3>👤 Shaxsiy ma'lumotlar</h3>
       <div class="form-field">
         <label>Ism familiya</label>
-        <input type="text" id="f_name" placeholder="${tgUser.first_name} ..." value="${tgUser.first_name}">
+        <input type="text" id="f_name" placeholder="Ism va familiyangiz" value="${tgUser.first_name||""}">
       </div>
       <div class="form-field">
         <label>Telefon raqam</label>
         <input type="tel" id="f_phone" placeholder="+998 90 000 00 00">
       </div>
     </div>
-
     <div class="checkout-section">
-      <h3>📍 Yetkazib berish</h3>
+      <h3>📍 Yetkazib berish manzili</h3>
       <div class="form-field">
-        <label>Manzil</label>
+        <label>To'liq manzil</label>
         <textarea id="f_address" placeholder="Shahar, ko'cha, uy raqami..."></textarea>
       </div>
     </div>
-
     ${cashbackBalance > 0 ? `
     <div class="checkout-section">
       <h3>💰 Cashback</h3>
@@ -1344,45 +588,37 @@ function renderCheckout() {
           <div class="icon">🎁</div>
           <div>
             <h4>Cashback ishlatish</h4>
-            <p>Balans: ${fmt(cashbackBalance)} so'm mavjud</p>
+            <p>Balans: ${fmt(cashbackBalance)} so'm</p>
           </div>
         </div>
-        <div class="toggle-switch ${useCashback?'on':''}" id="cashbackToggle">
+        <div class="toggle-switch ${useCashback?"on":""}" id="cbToggle">
           <div class="toggle-knob"></div>
         </div>
       </div>
-    </div>` : ''}
-
+    </div>` : ""}
     <div class="checkout-section">
       <h3>📋 Buyurtma xulosasi</h3>
-      <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:16px;">
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:16px">
         ${entries.map(([id,qty])=>{
-          const b = getBook(id);
-          return b ? `
-          <div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid var(--border);">
-            <span style="font-size:13px;">${b.emoji || '📚'} ${b.title} × ${qty}</span>
-            <span style="font-size:13px;font-weight:600;color:var(--gold)">${fmt(b.price*qty)}</span>
-          </div>` : '';
-        }).join('')}
-        ${discount > 0 ? `
-        <div style="display:flex;justify-content:space-between;padding:8px 0;color:var(--accent3);font-size:13px;">
-          <span>Cashback chegirma</span><span>−${fmt(discount)}</span>
-        </div>` : ''}
+          const b = getBook(Number(id));
+          return b ? `<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border);font-size:13px;">
+            <span>${b.emoji} ${b.title} × ${qty}</span>
+            <span style="font-weight:600;color:var(--gold)">${fmt(b.price*qty)}</span>
+          </div>` : "";
+        }).join("")}
+        ${discount > 0 ? `<div style="display:flex;justify-content:space-between;padding:8px 0;color:var(--accent3);font-size:13px;"><span>Cashback chegirma</span><span>−${fmt(discount)}</span></div>` : ""}
         <div style="display:flex;justify-content:space-between;padding:10px 0 4px;font-size:16px;font-weight:800;">
-          <span>Jami</span>
-          <span style="color:var(--gold)">${fmt(total)} so'm</span>
+          <span>Jami</span><span style="color:var(--gold)">${fmt(total)} so'm</span>
         </div>
       </div>
     </div>
-
-    <button class="btn-primary full" onclick="placeOrder()" style="font-size:15px;padding:16px;">
+    <button class="btn-primary full" id="orderBtn" onclick="placeOrder()" style="font-size:15px;padding:16px;">
       ✅ Buyurtmani tasdiqlash
     </button>
     <div style="text-align:center;margin-top:10px;font-size:11px;color:var(--text3)">
-      🔒 Ma'lumotlaringiz xavfsiz saqlanadi
+      🔒 Ma'lumotlaringiz xavfsiz
     </div>
-    <div style="height:20px"></div>
-  `;
+    <div style="height:24px"></div>`;
 }
 
 function toggleCashback() {
@@ -1390,162 +626,192 @@ function toggleCashback() {
   renderCheckout();
 }
 
+// ═══════════════════════════════════
+// BUYURTMA BERISH — Telegram Bot API ga to'g'ridan
+// ═══════════════════════════════════
 async function placeOrder() {
-  const name = document.getElementById('f_name')?.value;
-  const phone = document.getElementById('f_phone')?.value;
-  const address = document.getElementById('f_address')?.value;
+  const name    = document.getElementById("f_name")?.value?.trim();
+  const phone   = document.getElementById("f_phone")?.value?.trim();
+  const address = document.getElementById("f_address")?.value?.trim();
 
   if (!name || !phone || !address) {
-    showToast('⚠️ Barcha maydonlarni to\'ldiring');
+    showToast("⚠️ Barcha maydonlarni to'ldiring");
     return;
   }
 
-  const initData = getInitData();
-  if (!initData) {
-    showToast('Buyurtma uchun Telegram WebApp dan oching');
-    return;
-  }
+  const btn = document.getElementById("orderBtn");
+  if (btn) btn.disabled = true;
+  document.getElementById("loadingOverlay").classList.add("show");
 
-  const items = Object.entries(cart)
-    .filter(([, q]) => q > 0)
-    .map(([book_id, qty]) => ({ book_id, qty: Number(qty) }));
+  const entries = Object.entries(cart).filter(([,q])=>q>0);
+  const items = entries.map(([id,qty]) => {
+    const b = getBook(Number(id));
+    return { title: b.title, emoji: b.emoji, qty, price: b.price };
+  });
 
-  if (!items.length) {
-    showToast('Savat bo\'sh');
-    return;
-  }
+  const subtotal = getCartTotal();
+  const discount = useCashback ? Math.min(cashbackBalance, subtotal) : 0;
+  const total    = subtotal - discount;
+  const cashback_earned = Math.round(total * CASHBACK_RATE);
+  const order_id = "ORD-" + Date.now().toString().slice(-6);
+  const now = new Date().toLocaleString("uz-UZ");
 
-  let data;
+  // Xabar matni
+  const adminMsg =
+    `🔔 YANGI BUYURTMA!\n` +
+    `━━━━━━━━━━━━━━━\n` +
+    `🆔 #${order_id}\n` +
+    `📅 ${now}\n\n` +
+    `👤 Mijoz: ${name}\n` +
+    `📱 Tel: ${phone}\n` +
+    `📍 Manzil: ${address}\n` +
+    `🆔 TG: ${tgUser.id || "noma'lum"} (@${tgUser.username||"-"})\n\n` +
+    `📦 Kitoblar:\n` +
+    items.map(i => `  ${i.emoji} ${i.title} × ${i.qty} — ${fmt(i.price*i.qty)} so'm`).join("\n") +
+    `\n\n━━━━━━━━━━━━━━━\n` +
+    (discount > 0 ? `🎁 Cashback chegirma: -${fmt(discount)} so'm\n` : "") +
+    `💵 JAMI: ${fmt(total)} so'm`;
+
   try {
-    const res = await fetch(API_BASE + '/api/orders', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-telegram-init-data': initData,
-      },
-      body: JSON.stringify({
-        customer_name: name.trim(),
-        phone: phone.trim(),
-        address: address.trim(),
-        items,
-        use_cashback: useCashback,
-      }),
-    });
-    data = await res.json().catch(() => ({}));
-    if (!res.ok) {
-      showToast(data.error || 'Buyurtma yuborilmadi');
-      return;
+    // ── Agar Railway server bor bo'lsa ──
+    if (API_URL) {
+      await fetch(API_URL + "/api/orders", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          tg_user_id: tgUser.id,
+          tg_username: tgUser.username,
+          customer_name: name,
+          phone,
+          address,
+          items,
+          cashback_used: discount,
+        }),
+      });
+    } else {
+      // ── Railway yo'q bo'lsa — to'g'ridan Telegram API ga yuborish ──
+      await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          chat_id: ADMIN_ID,
+          text: adminMsg,
+        }),
+      });
     }
-  } catch (e) {
-    showToast('Tarmoq xatosi — qayta urinib ko\'ring');
-    return;
+
+    // Cashback yangilash
+    if (useCashback) cashbackBalance = Math.max(0, cashbackBalance - discount);
+    cashbackBalance += cashback_earned;
+
+    // Buyurtmani saqlash
+    userOrders.unshift({
+      id: order_id,
+      items: items.map(i => i.title).join(", "),
+      total,
+      status: "pending",
+      date: now,
+    });
+
+    cart = {};
+    updateBadge();
+
+    document.getElementById("loadingOverlay").classList.remove("show");
+
+    // Success ekrani
+    document.getElementById("checkoutContent").innerHTML = `
+      <div class="success-wrap">
+        <div class="success-anim">✅</div>
+        <h2>Buyurtma qabul qilindi!</h2>
+        <p>Sizning buyurtmangiz adminga yuborildi.<br>
+        Tez orada <b>bog'lanamiz</b>.<br><br>
+        💰 +${fmt(cashback_earned)} so'm cashback hisoblandi!</p>
+        <button class="btn-primary" onclick="switchTab('catalog')">📚 Xarid davom ettirish</button>
+      </div>`;
+
+    try { window.Telegram?.WebApp?.HapticFeedback?.notificationOccurred("success"); } catch(e){}
+    renderDashboard();
+
+  } catch (err) {
+    document.getElementById("loadingOverlay").classList.remove("show");
+    if (btn) btn.disabled = false;
+    showToast("❌ Xatolik yuz berdi, qayta urinib ko'ring");
+    console.error(err);
   }
-
-  const cashbackEarned = data.data?.cashback_earned ?? 0;
-  useCashback = false;
-  cart = {};
-  updateCartBadge();
-  await loginAndProfile();
-  await loadOrders();
-
-  document.getElementById('checkoutContent').innerHTML = `
-    <div class="success-screen show">
-      <div class="success-anim">✅</div>
-      <h2>Buyurtma qabul qilindi!</h2>
-      <p>Sizning buyurtmangiz server va bot orqali adminga yuborildi.<br>
-      Tez orada <b>Telegram</b>da xabar olasiz.<br><br>
-      💰 +${fmt(cashbackEarned)} cashback hisoblandi!</p>
-      <button class="btn-primary" onclick="switchTab('catalog')">
-        📚 Xarid davom ettirish
-      </button>
-    </div>
-  `;
-
-  try { window.Telegram?.WebApp?.HapticFeedback?.notificationOccurred('success'); } catch(e){}
-
-  renderDashboard();
-  renderBooks();
 }
 
 // ═══════════════════════════════════
-// RENDER DASHBOARD
+// DASHBOARD
 // ═══════════════════════════════════
 function renderDashboard() {
-  const container = document.getElementById('dashboardContent');
-  const totalSpent = orders.reduce((s,o)=>s+o.total,0);
-  const progressPct = Math.min((cashbackBalance / 50000) * 100, 100);
+  const container = document.getElementById("dashboardContent");
+  const totalSpent = userOrders.reduce((s,o)=>s+o.total,0);
+  const pct = Math.min((cashbackBalance/50000)*100,100);
 
   container.innerHTML = `
     <div style="padding:16px">
       <div class="dash-header">
-        <div class="dash-avatar">${(tgUser.first_name||'U')[0].toUpperCase()}</div>
+        <div class="dash-avatar">${(tgUser.first_name||"M")[0].toUpperCase()}</div>
         <div>
-          <div class="dash-name">${tgUser.first_name || 'Foydalanuvchi'}</div>
-          <div class="dash-handle">@${tgUser.username || 'user_' + tgUser.id}</div>
+          <div class="dash-name">${tgUser.first_name||"Mehmon"}</div>
+          <div class="dash-handle">${tgUser.username?"@"+tgUser.username:"Telegram foydalanuvchisi"}</div>
         </div>
       </div>
-
       <div class="stats-grid">
         <div class="stat-card">
           <div class="icon">📦</div>
-          <div class="value">${orders.length}</div>
-          <div class="label">Jami buyurtmalar</div>
+          <div class="value">${userOrders.length}</div>
+          <div class="label">Buyurtmalar</div>
         </div>
         <div class="stat-card">
           <div class="icon">💸</div>
           <div class="value" style="font-size:16px">${fmt(totalSpent)}</div>
-          <div class="label">Jami sarflangan</div>
+          <div class="label">Sarflangan (so'm)</div>
         </div>
       </div>
-
       <div class="cashback-card">
         <h3>💰 Cashback balansi</h3>
         <div class="cashback-amount"><span>so'm</span> ${fmt(cashbackBalance)}</div>
         <p>Har xariddan 5% cashback yig'asiz!</p>
         <div class="cashback-progress-wrap">
-          <div class="cashback-progress" style="width:${progressPct}%"></div>
+          <div class="cashback-progress" style="width:${pct}%"></div>
         </div>
-        <div class="progress-label">
-          <span>${fmt(cashbackBalance)}</span>
-          <span>Maqsad: 50,000</span>
-        </div>
+        <div class="progress-label"><span>${fmt(cashbackBalance)}</span><span>Maqsad: 50,000</span></div>
       </div>
-
-      <div class="orders-title">📋 So'nggi buyurtmalar</div>
-      ${orders.map(o=>`
+      ${userOrders.length > 0 ? `
+      <div class="orders-title">📋 Buyurtmalar tarixi</div>
+      ${userOrders.map(o=>`
         <div class="order-item">
           <div class="order-icon">📦</div>
           <div class="order-info">
             <div class="order-id">${o.id} · ${o.date}</div>
             <div class="order-items-text">${o.items}</div>
-            <div class="order-meta">
-              <div class="order-status status-${o.status}">
-                ${o.status==='delivered'?'✅ Yetkazildi':o.status==='pending'?'⏳ Kutilmoqda':'🔄 Jarayonda'}
-              </div>
+            <div class="order-status status-${o.status}">
+              ${o.status==="delivered"?"✅ Yetkazildi":"⏳ Kutilmoqda"}
             </div>
           </div>
           <div class="order-price">${fmt(o.total)}</div>
-        </div>
-      `).join('')}
+        </div>`).join("")}` : `
+      <div style="text-align:center;padding:30px;color:var(--text3)">
+        <div style="font-size:48px;margin-bottom:12px">📦</div>
+        <p>Hali buyurtma yo'q.<br>Birinchi xaridingizni qiling!</p>
+      </div>`}
       <div style="height:20px"></div>
-    </div>
-  `;
+    </div>`;
 }
 
 // ═══════════════════════════════════
 // UTILS
 // ═══════════════════════════════════
-function fmt(n) {
-  return new Intl.NumberFormat('uz-UZ').format(n);
-}
+function fmt(n) { return new Intl.NumberFormat("uz-UZ").format(n); }
 
 let toastTimer;
 function showToast(msg) {
-  const t = document.getElementById('toast');
+  const t = document.getElementById("toast");
   t.textContent = msg;
-  t.classList.add('show');
+  t.classList.add("show");
   clearTimeout(toastTimer);
-  toastTimer = setTimeout(()=>t.classList.remove('show'), 2200);
+  toastTimer = setTimeout(()=>t.classList.remove("show"), 2200);
 }
 </script>
 </body>
