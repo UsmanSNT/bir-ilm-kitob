@@ -3,6 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<!-- Bo'sh = avtomatik: localhostda :3001, Vercelda shu sayt domeni (api-base ni backend URL qilib ham yozishingiz mumkin) -->
+<meta name="api-base" content="">
 <title>KitobBozor — Telegram WebApp</title>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Lora:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
@@ -226,6 +228,39 @@ html, body {
   justify-content: center;
   font-size: 44px;
   background: var(--grad);
+}
+.book-card-img .cover-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.cart-item-cover { overflow: hidden; }
+.cart-item-cover .cover-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.cart-item-cover .fake-cover {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 28px;
+  border-radius: 8px;
+}
+.modal-cover .cover-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  border-radius: 12px;
+}
+.modal-cover.cover-has-photo {
+  padding: 0;
+  overflow: hidden;
 }
 .book-badge {
   position: absolute;
@@ -857,29 +892,25 @@ html, body {
 // ═══════════════════════════════════
 // DATA
 // ═══════════════════════════════════
-const BOOKS = [
-  { id:1, emoji:'📗', title:"O'tkan kunlar", author:"Abdulla Qodiriy", price:35000, genre:"Roman", desc:"O'zbek adabiyotining durdonasi. Otabek va Kumush muhabbati haqida tarixiy roman.", badge:"Bestseller", grad:"linear-gradient(135deg,#1a4a2e,#2d8a5a)" },
-  { id:2, emoji:'📘', title:"Mehrobdan chayon", author:"Abdulla Qodiriy", price:32000, genre:"Roman", desc:"Anvar va Ra'no muhabbati, mansab va xiyonat to'qnashuvi haqida dramatik roman.", grad:"linear-gradient(135deg,#1a2a4a,#2d5a8a)" },
-  { id:3, emoji:'📙', title:"Sariq devni minib", author:"Xudoiberdi To'xtaboyev", price:28000, genre:"Bolalar", desc:"Bolalar uchun sarguzasht hikoya. Quvnoq va ta'limli.", badge:"new", grad:"linear-gradient(135deg,#4a2a1a,#8a5a2d)" },
-  { id:4, emoji:'📕', title:"Atomic Habits", author:"James Clear", price:65000, genre:"Motivatsiya", desc:"Kichik o'zgarishlar qanday qilib katta natijalar berishi haqida amaliy qo'llanma.", badge:"Yangi", grad:"linear-gradient(135deg,#4a1a1a,#8a2d2d)" },
-  { id:5, emoji:'📔', title:"Qorajon", author:"Nazar Eshonqul", price:24000, genre:"Hikoya", desc:"Zamonaviy o'zbek nasri namunasi. Oddiy insonlar hayotidan olgan qissalar.", grad:"linear-gradient(135deg,#2a1a4a,#5a2d8a)" },
-  { id:6, emoji:'📒', title:"Rich Dad Poor Dad", author:"Robert Kiyosaki", price:72000, genre:"Moliya", desc:"Pul haqidagi fikrlashni o'zgartiruvchi eng mashhur moliyaviy kitob.", badge:"Bestseller", grad:"linear-gradient(135deg,#1a3a1a,#2d6a2d)" },
-  { id:7, emoji:'📓', title:"1984", author:"George Orwell", price:45000, genre:"Roman", desc:"Totalitar jamiyat haqida eng mashhur distopik roman.", grad:"linear-gradient(135deg,#1a1a1a,#3a3a3a)" },
-  { id:8, emoji:'📃', title:"Hobbi", author:"J.R.R. Tolkien", price:55000, genre:"Fantasy", desc:"Bilbo Begginzning ajoyib safari — dunglar, iblislar va ajdar Smaug bilan.", badge:"new", grad:"linear-gradient(135deg,#1a3a2a,#2d6a4a)" },
-  { id:9, emoji:'📜', title:"Iqtisodiyot asoslari", author:"N.G. Mansur", price:38000, genre:"Iqtisod", desc:"Iqtisodiyot bo'yicha zamonaviy darslik. Talabalar uchun ideal.", grad:"linear-gradient(135deg,#2a2a1a,#6a6a2d)" },
-  { id:10, emoji:'📋', title:"Kimyo sirlari", author:"U. Nazarov", price:42000, genre:"Fan", desc:"Kimyo fanining asosiy qonunlari va reaksiyalari haqida qiziqarli mazmun.", badge:"new", grad:"linear-gradient(135deg,#1a2a3a,#2d4a6a)" },
-];
+const API_BASE = (() => {
+  const m = document.querySelector('meta[name="api-base"]');
+  if (m && m.content && m.content.trim()) return m.content.trim().replace(/\/$/, '');
+  const h = location.hostname;
+  if (h === 'localhost' || h === '127.0.0.1') return 'http://localhost:3001';
+  return location.origin.replace(/\/$/, '');
+})();
 
 const GENRES = ['Barchasi', 'Roman', 'Motivatsiya', 'Moliya', 'Bolalar', 'Fantasy', 'Hikoya', 'Iqtisod', 'Fan'];
 
+let booksCatalog = []; // API: MongoDB _id + image, description, ...
+let orders = [];
 let cart = {}; // { bookId: qty }
 let selectedGenre = 'Barchasi';
 let searchQ = '';
 let useCashback = false;
-let cashbackBalance = 12500;
+let cashbackBalance = 0;
 const CASHBACK_RATE = 0.05;
 
-// Telegram user mock (real tg would give window.Telegram.WebApp.initDataUnsafe.user)
 let tgUser = { first_name: 'Barno', username: 'barno_orolova', id: 123456 };
 try {
   if (window.Telegram && window.Telegram.WebApp) {
@@ -890,17 +921,111 @@ try {
   }
 } catch(e){}
 
-// Orders history mock
-const orders = [
-  { id:'#ORD-2341', items:"O'tkan kunlar, 1984", total:80000, status:'delivered', date:'15 Mar 2025' },
-  { id:'#ORD-2298', items:"Rich Dad Poor Dad", total:72000, status:'delivered', date:'02 Feb 2025' },
-  { id:'#ORD-2187', items:"Atomic Habits, Hobbi", total:120000, status:'pending', date:'18 Mar 2025' },
-];
+function getInitData() {
+  try {
+    const raw = window.Telegram?.WebApp?.initData;
+    if (raw && String(raw).length) return raw;
+  } catch (e) {}
+  const h = location.hostname;
+  if (h === 'localhost' || h === '127.0.0.1') {
+    return 'user=' + encodeURIComponent(JSON.stringify({
+      id: tgUser.id || 123456789,
+      first_name: tgUser.first_name || 'Test',
+      username: tgUser.username || 'testuser',
+    }));
+  }
+  return '';
+}
+
+function bookDesc(b) {
+  return b.description || b.desc || '';
+}
+
+/** Rasm: to'liq URL yoki API serverdagi `/covers/...` nisbiy yo'l */
+function bookImageUrl(b) {
+  if (!b.image) return '';
+  const u = String(b.image).trim();
+  if (/^https?:\/\//i.test(u) || u.startsWith('//')) return u;
+  const base = API_BASE.replace(/\/$/, '');
+  return base + (u.startsWith('/') ? u : '/' + u);
+}
+
+function bookCoverHtml(b) {
+  const grad = b.grad || 'linear-gradient(135deg,#2a2a2a,#4a4a4a)';
+  const em = b.emoji || '📚';
+  if (b.image) {
+    const src = bookImageUrl(b);
+    return `<img class="cover-img" src="${src}" alt="" loading="lazy">`;
+  }
+  return `<div class="fake-cover" style="background:${grad}">${em}</div>`;
+}
+
+async function loadBooks() {
+  try {
+    const r = await fetch(API_BASE + '/api/books');
+    const j = await r.json();
+    if (j.success && Array.isArray(j.data)) booksCatalog = j.data;
+    else booksCatalog = [];
+  } catch (e) {
+    booksCatalog = [];
+    showToast("Serverga ulanib bo'lmadi — api-base URL ni tekshiring");
+  }
+}
+
+async function loginAndProfile() {
+  const initData = getInitData();
+  if (!initData) return;
+  try {
+    await fetch(API_BASE + '/api/auth/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ initData }),
+    });
+    const pr = await fetch(API_BASE + '/api/user/profile', {
+      headers: { 'x-telegram-init-data': initData },
+    });
+    if (pr.ok) {
+      const pj = await pr.json();
+      if (pj.success && pj.data && typeof pj.data.cashback_balance === 'number') {
+        cashbackBalance = pj.data.cashback_balance;
+      }
+    }
+  } catch (e) {}
+}
+
+async function loadOrders() {
+  const initData = getInitData();
+  if (!initData) return;
+  try {
+    const r = await fetch(API_BASE + '/api/orders', {
+      headers: { 'x-telegram-init-data': initData },
+    });
+    if (!r.ok) return;
+    const j = await r.json();
+    if (!j.success || !Array.isArray(j.data)) return;
+    orders = j.data.map((o) => ({
+      id: '#' + o.order_id,
+      items: (o.items || []).map((i) => i.title).join(', '),
+      total: o.total,
+      status: o.status,
+      date: new Date(o.createdAt).toLocaleDateString('uz-UZ', {
+        day: 'numeric',
+        month: 'short',
+        year: 'numeric',
+      }),
+    }));
+  } catch (e) {}
+}
 
 // ═══════════════════════════════════
 // INIT
 // ═══════════════════════════════════
-window.onload = () => {
+window.onload = async () => {
+  const grid = document.getElementById('booksGrid');
+  if (grid) grid.innerHTML = '<div style="padding:48px;text-align:center;color:var(--text2)">Yuklanmoqda…</div>';
+  await loadBooks();
+  await loginAndProfile();
+  await loadOrders();
   renderFilters();
   renderBooks();
   renderDashboard();
@@ -952,7 +1077,7 @@ function filterBooks() {
 }
 
 function getFilteredBooks() {
-  return BOOKS.filter(b => {
+  return booksCatalog.filter(b => {
     const matchGenre = selectedGenre === 'Barchasi' || b.genre === selectedGenre;
     const matchSearch = !searchQ || b.title.toLowerCase().includes(searchQ) || b.author.toLowerCase().includes(searchQ);
     return matchGenre && matchSearch;
@@ -968,12 +1093,18 @@ function renderBooks() {
   const count = document.getElementById('bookCount');
   count.textContent = books.length + ' ta kitob';
 
+  if (!books.length) {
+    grid.innerHTML = '<div style="padding:48px;text-align:center;color:var(--text2)">Kitoblar topilmadi. Server ishlayaptimi?</div>';
+    return;
+  }
+
   grid.innerHTML = books.map(b => {
-    const inCart = cart[b.id] > 0;
+    const bid = b._id;
+    const inCart = cart[bid] > 0;
     return `
-    <div class="book-card" onclick="openBook(${b.id})">
+    <div class="book-card" onclick="openBook('${bid}')">
       <div class="book-card-img">
-        <div class="fake-cover" style="background:${b.grad}">${b.emoji}</div>
+        ${bookCoverHtml(b)}
         ${b.badge ? `<div class="book-badge ${b.badge==='new'?'new':''}">${b.badge==='new'?'Yangi':b.badge}</div>` : ''}
       </div>
       <div class="book-card-body">
@@ -981,7 +1112,7 @@ function renderBooks() {
         <div class="book-card-author">${b.author}</div>
         <div class="book-card-footer">
           <div class="book-price">${fmt(b.price)}</div>
-          <button class="add-btn ${inCart?'added':''}" onclick="quickAdd(event,${b.id})">
+          <button class="add-btn ${inCart?'added':''}" onclick="quickAdd(event,'${bid}')">
             ${inCart ? '✓' : '+'}
           </button>
         </div>
@@ -999,25 +1130,28 @@ function quickAdd(e, id) {
 // BOOK MODAL
 // ═══════════════════════════════════
 function openBook(id) {
-  const b = BOOKS.find(x => x.id === id);
+  const b = getBook(id);
   if (!b) return;
 
-  const inCart = cart[b.id] > 0;
+  const bid = b._id;
+  const inCart = cart[bid] > 0;
+  const coverClass = 'modal-cover' + (b.image ? ' cover-has-photo' : '');
+  const coverStyle = b.image ? '' : ` style="background:${b.grad || 'var(--surface2)'}"`;
   document.getElementById('modalBody').innerHTML = `
-    <div class="modal-cover" style="background:${b.grad}">${b.emoji}</div>
+    <div class="${coverClass}"${coverStyle}>${b.image ? bookCoverHtml(b) : (b.emoji || '📚')}</div>
     <div class="modal-title">${b.title}</div>
     <div class="modal-author">✍️ ${b.author}</div>
     <div class="modal-tags">
       <div class="tag">📚 ${b.genre}</div>
       ${b.badge ? `<div class="tag">🔥 ${b.badge==='new'?'Yangi':b.badge}</div>` : ''}
     </div>
-    <div class="modal-desc">${b.desc}</div>
+    <div class="modal-desc">${bookDesc(b)}</div>
     <div class="modal-footer">
       <div class="modal-price">
         ${fmt(b.price)}
         <small>Narx (so'm)</small>
       </div>
-      <button class="btn-primary ${inCart?'success':''}" id="modalCartBtn" onclick="modalAddToCart(${id})">
+      <button class="btn-primary ${inCart?'success':''}" id="modalCartBtn" onclick="modalAddToCart('${bid}')">
         ${inCart ? '✓ Savatda' : '🛒 Savatga'}
       </button>
     </div>
@@ -1069,13 +1203,16 @@ function changeQty(id, delta) {
   renderBooks();
 }
 
-function getBook(id) { return BOOKS.find(x => x.id === id); }
+function getBook(id) {
+  const sid = String(id);
+  return booksCatalog.find(x => String(x._id) === sid);
+}
 
 function getCartCount() { return Object.values(cart).reduce((a,b)=>a+b,0); }
 
 function getCartTotal() {
   return Object.entries(cart).reduce((sum,[id,qty])=>{
-    const b = getBook(Number(id));
+    const b = getBook(id);
     return b ? sum + b.price * qty : sum;
   }, 0);
 }
@@ -1114,21 +1251,21 @@ function renderCart() {
 
   container.innerHTML = `
     ${entries.map(([id,qty])=>{
-      const b = getBook(Number(id));
+      const b = getBook(id);
       return b ? `
       <div class="cart-item">
-        <div class="cart-item-cover" style="background:${b.grad}">${b.emoji}</div>
+        <div class="cart-item-cover">${bookCoverHtml(b)}</div>
         <div class="cart-item-info">
           <div class="cart-item-title">${b.title}</div>
           <div class="cart-item-author">${b.author}</div>
           <div class="cart-item-controls">
-            <button class="qty-btn" onclick="changeQty(${b.id},-1)">−</button>
+            <button class="qty-btn" onclick="changeQty('${id}',-1)">−</button>
             <span class="qty-num">${qty}</span>
-            <button class="qty-btn" onclick="changeQty(${b.id},1)">+</button>
+            <button class="qty-btn" onclick="changeQty('${id}',1)">+</button>
           </div>
         </div>
         <div style="display:flex;flex-direction:column;align-items:flex-end;gap:8px">
-          <button class="cart-item-del" onclick="removeFromCart(${b.id})">✕</button>
+          <button class="cart-item-del" onclick="removeFromCart('${id}')">✕</button>
           <div class="cart-item-price">${fmt(b.price * qty)}</div>
         </div>
       </div>` : '';
@@ -1220,10 +1357,10 @@ function renderCheckout() {
       <h3>📋 Buyurtma xulosasi</h3>
       <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:16px;">
         ${entries.map(([id,qty])=>{
-          const b = getBook(Number(id));
+          const b = getBook(id);
           return b ? `
           <div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid var(--border);">
-            <span style="font-size:13px;">${b.emoji} ${b.title} × ${qty}</span>
+            <span style="font-size:13px;">${b.emoji || '📚'} ${b.title} × ${qty}</span>
             <span style="font-size:13px;font-weight:600;color:var(--gold)">${fmt(b.price*qty)}</span>
           </div>` : '';
         }).join('')}
@@ -1253,7 +1390,7 @@ function toggleCashback() {
   renderCheckout();
 }
 
-function placeOrder() {
+async function placeOrder() {
   const name = document.getElementById('f_name')?.value;
   const phone = document.getElementById('f_phone')?.value;
   const address = document.getElementById('f_address')?.value;
@@ -1263,25 +1400,59 @@ function placeOrder() {
     return;
   }
 
-  // Simulate placing order
-  const subtotal = getCartTotal();
-  const cashbackEarned = Math.round(subtotal * CASHBACK_RATE);
-
-  if (useCashback) {
-    cashbackBalance = Math.max(0, cashbackBalance - Math.min(cashbackBalance, subtotal));
+  const initData = getInitData();
+  if (!initData) {
+    showToast('Buyurtma uchun Telegram WebApp dan oching');
+    return;
   }
-  cashbackBalance += cashbackEarned;
 
-  // Clear cart
+  const items = Object.entries(cart)
+    .filter(([, q]) => q > 0)
+    .map(([book_id, qty]) => ({ book_id, qty: Number(qty) }));
+
+  if (!items.length) {
+    showToast('Savat bo\'sh');
+    return;
+  }
+
+  let data;
+  try {
+    const res = await fetch(API_BASE + '/api/orders', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-telegram-init-data': initData,
+      },
+      body: JSON.stringify({
+        customer_name: name.trim(),
+        phone: phone.trim(),
+        address: address.trim(),
+        items,
+        use_cashback: useCashback,
+      }),
+    });
+    data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      showToast(data.error || 'Buyurtma yuborilmadi');
+      return;
+    }
+  } catch (e) {
+    showToast('Tarmoq xatosi — qayta urinib ko\'ring');
+    return;
+  }
+
+  const cashbackEarned = data.data?.cashback_earned ?? 0;
+  useCashback = false;
   cart = {};
   updateCartBadge();
+  await loginAndProfile();
+  await loadOrders();
 
-  // Show success
   document.getElementById('checkoutContent').innerHTML = `
     <div class="success-screen show">
       <div class="success-anim">✅</div>
       <h2>Buyurtma qabul qilindi!</h2>
-      <p>Sizning buyurtmangiz adminga yuborildi.<br>
+      <p>Sizning buyurtmangiz server va bot orqali adminga yuborildi.<br>
       Tez orada <b>Telegram</b>da xabar olasiz.<br><br>
       💰 +${fmt(cashbackEarned)} cashback hisoblandi!</p>
       <button class="btn-primary" onclick="switchTab('catalog')">
@@ -1290,10 +1461,10 @@ function placeOrder() {
     </div>
   `;
 
-  // Telegram WebApp haptic
   try { window.Telegram?.WebApp?.HapticFeedback?.notificationOccurred('success'); } catch(e){}
 
   renderDashboard();
+  renderBooks();
 }
 
 // ═══════════════════════════════════

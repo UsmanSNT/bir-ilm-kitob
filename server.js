@@ -13,11 +13,25 @@ const { notifyNewOrder } = require("./bot");
 const app = express();
 app.use(express.json());
 app.use(cors({ origin: process.env.WEBAPP_URL }));
+app.use("/covers", express.static("public/covers"));
 
 // ──────────────────────────────────────────────────────
 // MongoDB ulanish
 // ──────────────────────────────────────────────────────
 mongoose.connect(process.env.MONGODB_URI || "mongodb+srv://avrangzebabdujalilov_db_user:<mPM6jbIxlWQRiDQq>@cluster0.macklne.mongodb.net/bir-ilm-kitob?appName=Cluster0");
+
+const SEED_BOOKS = [
+  { title: "O'tkan kunlar", author: "Abdulla Qodiriy", price: 35000, genre: "Roman", description: "O'zbek adabiyotining durdonasi. Otabek va Kumush muhabbati haqida tarixiy roman.", emoji: "📗", badge: "Bestseller", grad: "linear-gradient(135deg,#1a4a2e,#2d8a5a)", image: "https://picsum.photos/seed/birilm-otkan/320/460" },
+  { title: "Mehrobdan chayon", author: "Abdulla Qodiriy", price: 32000, genre: "Roman", description: "Anvar va Ra'no muhabbati, mansab va xiyonat to'qnashuvi haqida dramatik roman.", emoji: "📘", grad: "linear-gradient(135deg,#1a2a4a,#2d5a8a)", image: "https://picsum.photos/seed/birilm-mehrob/320/460" },
+  { title: "Sariq devni minib", author: "Xudoiberdi To'xtaboyev", price: 28000, genre: "Bolalar", description: "Bolalar uchun sarguzasht hikoya. Quvnoq va ta'limli.", badge: "new", emoji: "📙", grad: "linear-gradient(135deg,#4a2a1a,#8a5a2d)", image: "https://picsum.photos/seed/birilm-sariq/320/460" },
+  { title: "Atomic Habits", author: "James Clear", price: 65000, genre: "Motivatsiya", description: "Kichik o'zgarishlar qanday qilib katta natijalar berishi haqida amaliy qo'llanma.", badge: "Yangi", emoji: "📕", grad: "linear-gradient(135deg,#4a1a1a,#8a2d2d)", image: "https://picsum.photos/seed/birilm-atomic/320/460" },
+  { title: "Qorajon", author: "Nazar Eshonqul", price: 24000, genre: "Hikoya", description: "Zamonaviy o'zbek nasri namunasi. Oddiy insonlar hayotidan olgan qissalar.", emoji: "📔", grad: "linear-gradient(135deg,#2a1a4a,#5a2d8a)", image: "https://picsum.photos/seed/birilm-qorajon/320/460" },
+  { title: "Rich Dad Poor Dad", author: "Robert Kiyosaki", price: 72000, genre: "Moliya", description: "Pul haqidagi fikrlashni o'zgartiruvchi eng mashhur moliyaviy kitob.", badge: "Bestseller", emoji: "📒", grad: "linear-gradient(135deg,#1a3a1a,#2d6a2d)", image: "https://picsum.photos/seed/birilm-richdad/320/460" },
+  { title: "1984", author: "George Orwell", price: 45000, genre: "Roman", description: "Totalitar jamiyat haqida eng mashhur distopik roman.", emoji: "📓", grad: "linear-gradient(135deg,#1a1a1a,#3a3a3a)", image: "https://picsum.photos/seed/birilm-1984/320/460" },
+  { title: "Hobbi", author: "J.R.R. Tolkien", price: 55000, genre: "Fantasy", description: "Bilbo Begginzning ajoyib safari — dunglar, iblislar va ajdar Smaug bilan.", badge: "new", emoji: "📃", grad: "linear-gradient(135deg,#1a3a2a,#2d6a4a)", image: "https://picsum.photos/seed/birilm-hobbi/320/460" },
+  { title: "Iqtisodiyot asoslari", author: "N.G. Mansur", price: 38000, genre: "Iqtisod", description: "Iqtisodiyot bo'yicha zamonaviy darslik. Talabalar uchun ideal.", emoji: "📜", grad: "linear-gradient(135deg,#2a2a1a,#6a6a2d)", image: "https://picsum.photos/seed/birilm-iqtisod/320/460" },
+  { title: "Kimyo sirlari", author: "U. Nazarov", price: 42000, genre: "Fan", description: "Kimyo fanining asosiy qonunlari va reaksiyalari haqida qiziqarli mazmun.", badge: "new", emoji: "📋", grad: "linear-gradient(135deg,#1a2a3a,#2d4a6a)", image: "https://picsum.photos/seed/birilm-kimyo/320/460" },
+];
 
 // ──────────────────────────────────────────────────────
 // Schemalar
@@ -28,8 +42,9 @@ const BookSchema = new mongoose.Schema({
   price: Number,
   genre: String,
   description: String,
-  image: String,
+  image: String, // to'liq URL yoki /covers/kitob.jpg (static)
   emoji: String,
+  grad: String, // ixtiyoriy gradient (rasm bo'lmasa)
   badge: String,
   inStock: { type: Boolean, default: true },
   createdAt: { type: Date, default: Date.now },
@@ -75,6 +90,18 @@ const OrderSchema = new mongoose.Schema({
 const Book = mongoose.model("Book", BookSchema);
 const User = mongoose.model("User", UserSchema);
 const Order = mongoose.model("Order", OrderSchema);
+
+mongoose.connection.once("open", async () => {
+  try {
+    const n = await Book.countDocuments();
+    if (n === 0) {
+      await Book.insertMany(SEED_BOOKS);
+      console.log("📚 MongoDB: boshlang'ich 10 ta kitob (rasmlar bilan) yuklandi");
+    }
+  } catch (e) {
+    console.error("Kitoblar seed xatosi:", e.message);
+  }
+});
 
 // ──────────────────────────────────────────────────────
 // Telegram initData tekshirish (xavfsizlik)

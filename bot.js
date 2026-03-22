@@ -103,42 +103,52 @@ bot.action(/cancel_(.+)/, async (ctx) => {
 // ──────────────────────────────────────────────────────
 async function notifyNewOrder(order) {
   const fmt = (n) => new Intl.NumberFormat("uz-UZ").format(n);
+  const itemLines = order.items.map((i) => `• ${i.title} × ${i.qty}`).join("\n");
 
-  // Foydalanuvchiga tasdiq
-  await bot.telegram.sendMessage(
-    order.tg_user_id,
-    `✅ *Buyurtmangiz qabul qilindi!*\n\n` +
-    `📋 Buyurtma *#${order.order_id}*\n\n` +
+  // Oddiy matn: Markdown maxsus belgilari (_, *, []) xabar parchalanishining oldini oladi
+  const userText =
+    `✅ Buyurtmangiz qabul qilindi!\n\n` +
+    `📋 Buyurtma #${order.order_id}\n\n` +
     order.items.map((i) => `📖 ${i.title} × ${i.qty}`).join("\n") +
-    `\n\n💵 *Jami: ${fmt(order.total)} so'm*\n` +
+    `\n\n💵 Jami: ${fmt(order.total)} so'm\n` +
     `📍 Manzil: ${order.address}\n\n` +
     `⏳ Tez orada yetkazib beramiz!\n` +
-    `💰 +${fmt(order.cashback_earned)} cashback hisoblandi 🎉`,
-    { parse_mode: "Markdown" }
-  );
+    `💰 +${fmt(order.cashback_earned)} cashback hisoblandi 🎉`;
 
-  // Adminga xabar
-  await bot.telegram.sendMessage(
-    ADMIN_ID,
-    `🔔 *YANGI BUYURTMA!*\n\n` +
+  const adminText =
+    `🔔 YANGI BUYURTMA\n\n` +
     `🆔 #${order.order_id}\n` +
     `👤 ${order.customer_name}\n` +
     `📱 ${order.phone}\n` +
     `📍 ${order.address}\n\n` +
-    `📦 Kitoblar:\n` +
-    order.items.map((i) => `  • ${i.title} × ${i.qty}`).join("\n") +
-    `\n\n💵 Jami: ${fmt(order.total)} so'm`,
-    {
-      parse_mode: "Markdown",
-      ...Markup.inlineKeyboard([
-        [
-          Markup.button.callback("✅ Tasdiqlash", `confirm_${order.order_id}`),
-          Markup.button.callback("❌ Bekor", `cancel_${order.order_id}`),
-        ],
-        [Markup.button.callback("🚚 Yetkazildi", `deliver_${order.order_id}`)],
-      ]),
+    `📦 Kitoblar:\n${itemLines}\n\n` +
+    `💵 Jami: ${fmt(order.total)} so'm`;
+
+  const adminKeyboard = Markup.inlineKeyboard([
+    [
+      Markup.button.callback("✅ Tasdiqlash", `confirm_${order.order_id}`),
+      Markup.button.callback("❌ Bekor", `cancel_${order.order_id}`),
+    ],
+    [Markup.button.callback("🚚 Yetkazildi", `deliver_${order.order_id}`)],
+  ]);
+
+  // Avval admin: foydalanuvchi botni bloklaganda ham admin xabarni olishi kerak
+  const adminId = ADMIN_ID && String(ADMIN_ID).trim();
+  if (adminId) {
+    try {
+      await bot.telegram.sendMessage(adminId, adminText, adminKeyboard);
+    } catch (e) {
+      console.error("Adminga xabar yuborilmadi:", e.message);
     }
-  );
+  } else {
+    console.warn("ADMIN_ID .env da yo'q — yangi buyurtma admin Telegramiga ketmaydi");
+  }
+
+  try {
+    await bot.telegram.sendMessage(order.tg_user_id, userText);
+  } catch (e) {
+    console.error("Foydalanuvchiga tasdiq yuborilmadi:", e.message);
+  }
 }
 
 bot.on("message", async (ctx) => {
