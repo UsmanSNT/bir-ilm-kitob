@@ -17,7 +17,7 @@ app.use(cors({ origin: process.env.WEBAPP_URL }));
 // ──────────────────────────────────────────────────────
 // MongoDB ulanish
 // ──────────────────────────────────────────────────────
-mongoose.connect(process.env.MONGODB_URI || "mongodb://localhost/kitob_bozor");
+mongoose.connect(process.env.MONGODB_URI || "mongodb+srv://avrangzebabdujalilov_db_user:<mPM6jbIxlWQRiDQq>@cluster0.macklne.mongodb.net/bir-ilm-kitob?appName=Cluster0");
 
 // ──────────────────────────────────────────────────────
 // Schemalar
